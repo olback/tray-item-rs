@@ -2,4 +2,4 @@
 
 * [x] Linux
 * [ ] Windows
-* [ ] MacOS
+* [ ] MacOS - sysbar?
