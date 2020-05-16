@@ -29,9 +29,15 @@ impl TrayIndicator {
 
     }
 
-    pub fn show(&mut self) {
+    pub fn set_attention_icon(&mut self, icon: &str) {
 
-        self.0.show()
+        self.0.set_attention_icon(icon)
+
+    }
+
+    pub fn show(&mut self, attention: bool) {
+
+        self.0.show(attention)
 
     }
 
@@ -51,12 +57,6 @@ impl TrayIndicator {
         where F: Fn(&gtk::MenuItem) -> () + 'static {
 
        self.0.add_menu_item(label, cb);
-
-    }
-
-    pub fn add_divider(&mut self) {
-
-        self.0.add_divider();
 
     }
 

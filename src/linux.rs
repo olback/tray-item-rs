@@ -19,9 +19,19 @@ impl TrayIndicatorLinux {
 
     }
 
-    pub(crate) fn show(&mut self) {
+    pub(crate) fn set_attention_icon(&mut self, icon: &str) {
 
-        self.tray.set_status(AppIndicatorStatus::Active);
+        self.tray.set_attention_icon(icon)
+
+    }
+
+    pub(crate) fn show(&mut self, attention: bool) {
+
+        self.tray.set_status(if attention {
+            AppIndicatorStatus::Attention
+        } else {
+            AppIndicatorStatus::Active
+        });
 
     }
 
@@ -34,6 +44,7 @@ impl TrayIndicatorLinux {
     pub(crate) fn add_label(&mut self, label: &str) {
 
         let item = gtk::MenuItem::new_with_label(label.as_ref());
+        item.set_sensitive(false);
         self.menu.append(&item);
         self.menu.show_all();
         self.tray.set_menu(&mut self.menu);
@@ -48,12 +59,6 @@ impl TrayIndicatorLinux {
         self.menu.append(&item);
         self.menu.show_all();
         self.tray.set_menu(&mut self.menu);
-
-    }
-
-    pub(crate) fn add_divider(&mut self) {
-
-        todo!()
 
     }
 
