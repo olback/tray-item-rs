@@ -54,9 +54,11 @@ impl TrayIndicator {
     }
 
     pub fn add_menu_item<F>(&mut self, label: &str, cb: F)
-        where F: Fn(&gtk::MenuItem) -> () + 'static {
+        where F: Fn() -> () + 'static {
 
-       self.0.add_menu_item(label, cb);
+       self.0.add_menu_item(label, move |_| {
+           cb()
+       });
 
     }
 
