@@ -1,6 +1,6 @@
-pub struct TrayIndicatorMacOS;
+pub struct TrayItemMacOS;
 
-impl TrayIndicatorMacOS {
+impl TrayItemMacOS {
 
     pub fn new(title: &str, icon: &str) -> Self {
 

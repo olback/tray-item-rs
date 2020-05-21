@@ -9,10 +9,10 @@ mod macos;
 
 // Set type depending on OS
 #[cfg(target_os = "linux")]
-pub(crate) type TrayIndicatorImpl = linux::TrayIndicatorLinux;
+pub(crate) type TrayItemImpl = linux::TrayItemLinux;
 
 #[cfg(target_os = "windows")]
-pub(crate) type TrayIndicatorImpl = windows::TrayIndicatorWindows;
+pub(crate) type TrayItemImpl = windows::TrayItemWindows;
 
 #[cfg(target_os = "macos")]
-pub(crate) type TrayIndicatorImpl = macos::TrayIndicatorMacOS;
+pub(crate) type TrayItemImpl = macos::TrayItemMacOS;

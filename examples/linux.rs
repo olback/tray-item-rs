@@ -1,11 +1,11 @@
-use tray_indicator::TrayIndicator;
+use tray_item::TrayItem;
 use gtk;
 
 fn main() {
 
     gtk::init().unwrap();
 
-    let mut tray = TrayIndicator::new("Tray Example", "accessories-calculator").unwrap();
+    let mut tray = TrayItem::new("Tray Example", "accessories-calculator").unwrap();
 
     tray.add_label("Tray Label").unwrap();
 

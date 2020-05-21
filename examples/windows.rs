@@ -1,8 +1,8 @@
-use tray_indicator::TrayIndicator;
+use tray_item::TrayItem;
 
 fn main() {
 
-    let mut tray = TrayIndicator::new("Tray Example", "name-of-icon-in-rc-file").unwrap();
+    let mut tray = TrayItem::new("Tray Example", "name-of-icon-in-rc-file").unwrap();
 
     tray.add_label("Tray Label").unwrap();
 

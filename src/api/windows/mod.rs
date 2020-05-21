@@ -37,7 +37,7 @@ thread_local!(static WININFO_STASH: RefCell<Option<WindowsLoopData>> = RefCell::
 
 type CallBackEntry = Option<Box<dyn Fn() -> () + Send + Sync + 'static>>;
 
-pub struct TrayIndicatorWindows {
+pub struct TrayItemWindows {
     entries: Arc<Mutex<Vec::<CallBackEntry>>>,
     info: WindowInfo,
     windows_loop: Option<thread::JoinHandle<()>>,
@@ -45,7 +45,7 @@ pub struct TrayIndicatorWindows {
     event_tx: Sender<WindowsTrayEvent>
 }
 
-impl TrayIndicatorWindows {
+impl TrayItemWindows {
 
     pub fn new(title: &str, icon: &str) -> Result<Self, TIError> {
 
@@ -275,7 +275,7 @@ impl TrayIndicatorWindows {
 
 }
 
-impl Drop for TrayIndicatorWindows {
+impl Drop for TrayItemWindows {
     fn drop(&mut self) {
         self.shutdown().ok();
         self.quit();

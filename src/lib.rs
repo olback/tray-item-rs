@@ -2,15 +2,15 @@ mod api;
 mod error;
 pub use error::TIError;
 
-pub struct TrayIndicator(api::TrayIndicatorImpl);
+pub struct TrayItem(api::TrayItemImpl);
 
-impl TrayIndicator {
+impl TrayItem {
 
     pub fn new(title: &str, icon: &str) -> Result<Self, TIError> {
 
         Ok(
             Self(
-                api::TrayIndicatorImpl::new(title, icon)?
+                api::TrayItemImpl::new(title, icon)?
             )
         )
 
