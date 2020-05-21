@@ -3,6 +3,12 @@ name = "tray-item"
 version = "0.3.0-alpha"
 authors = ["Edwin Svensson <trayitemrs@olback.net>"]
 edition = "2018"
+description = "Super simple API to make tray icons/menus on Windows, Mac & Linux"
+homepage = "https://github.com/olback/tray-item-rs"
+repository = "https://github.com/olback/tray-item-rs"
+readme = "README.md"
+keywords = ["gui", "tray", "desktop", "tray-item"]
+license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

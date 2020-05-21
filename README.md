@@ -6,3 +6,7 @@ These recourses have to be packed into be final binary.
 * [x] Linux
 * [x] Windows
 * [ ] MacOS - sysbar?
+
+
+### Todo:
+[ ] Docs
