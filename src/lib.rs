@@ -1,64 +1,37 @@
-// Imports
-#[cfg(target_os = "linux")]
-mod linux;
+mod api;
+mod error;
+pub use error::TIError;
 
-#[cfg(target_os = "windows")]
-mod windows;
-
-#[cfg(target_os = "macos")]
-mod macos;
-
-// Set type depending on OS
-#[cfg(target_os = "linux")]
-type TrayIndicatorImpl = linux::TrayIndicatorLinux;
-
-#[cfg(target_os = "windows")]
-type TrayIndicatorImpl = windows::TrayIndicatorWindows;
-
-#[cfg(target_os = "macos")]
-type TrayIndicatorImpl = macos::TrayIndicatorMacOS;
-
-
-pub struct TrayIndicator(TrayIndicatorImpl);
+pub struct TrayIndicator(api::TrayIndicatorImpl);
 
 impl TrayIndicator {
 
-    pub fn new(title: &str, icon: &str) -> Self {
+    pub fn new(title: &str, icon: &str) -> Result<Self, TIError> {
 
-        Self(TrayIndicatorImpl::new(title, icon))
-
-    }
-
-    pub fn set_attention_icon(&mut self, icon: &str) {
-
-        self.0.set_attention_icon(icon)
+        Ok(
+            Self(
+                api::TrayIndicatorImpl::new(title, icon)?
+            )
+        )
 
     }
 
-    pub fn show(&mut self, attention: bool) {
+    pub fn set_icon(&mut self, icon: &str) -> Result<(), TIError> {
 
-        self.0.show(attention)
-
-    }
-
-    pub fn hide(&mut self) {
-
-        self.0.hide()
+        self.0.set_icon(icon)
 
     }
 
-    pub fn add_label(&mut self, label: &str) {
+    pub fn add_label(&mut self, label: &str) -> Result<(), TIError> {
 
-        self.0.add_label(label);
+        self.0.add_label(label)
 
     }
 
-    pub fn add_menu_item<F>(&mut self, label: &str, cb: F)
-        where F: Fn() -> () + 'static {
+    pub fn add_menu_item<F>(&mut self, label: &str, cb: F) -> Result<(), TIError>
+        where F: Fn() -> () + Send + Sync + 'static {
 
-       self.0.add_menu_item(label, move |_| {
-           cb()
-       });
+       self.0.add_menu_item(label, cb)
 
     }
 

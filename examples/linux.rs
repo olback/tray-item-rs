@@ -5,19 +5,17 @@ fn main() {
 
     gtk::init().unwrap();
 
-    let mut tray = TrayIndicator::new("Tray Example", "accessories-calculator");
+    let mut tray = TrayIndicator::new("Tray Example", "accessories-calculator").unwrap();
 
-    tray.add_label("Tray Label");
+    tray.add_label("Tray Label").unwrap();
 
     tray.add_menu_item("Hello", || {
         println!("Hello!");
-    });
+    }).unwrap();
 
     tray.add_menu_item("Quit", || {
         gtk::main_quit();
-    });
-
-    tray.show(false);
+    }).unwrap();
 
     gtk::main();
 
