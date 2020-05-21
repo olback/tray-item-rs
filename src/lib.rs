@@ -35,4 +35,10 @@ impl TrayItem {
 
     }
 
+    pub fn inner_mut(&mut self) -> &mut api::TrayItemImpl {
+
+        &mut self.0
+
+    }
+
 }

@@ -2,14 +2,14 @@ use crate::TIError;
 use libappindicator::{AppIndicator, AppIndicatorStatus};
 use gtk::prelude::*;
 
-pub(crate) struct TrayItemLinux {
+pub struct TrayItemLinux {
     tray: AppIndicator,
     menu: gtk::Menu
 }
 
 impl TrayItemLinux {
 
-    pub(crate) fn new(title: &str, icon: &str) -> Result<Self, TIError> {
+    pub fn new(title: &str, icon: &str) -> Result<Self, TIError> {
 
         let mut t = Self {
             tray: AppIndicator::new(title, icon),
@@ -22,7 +22,7 @@ impl TrayItemLinux {
 
     }
 
-    pub(crate) fn set_icon(&mut self, icon: &str) -> Result<(), TIError> {
+    pub fn set_icon(&mut self, icon: &str) -> Result<(), TIError> {
 
         self.tray.set_icon(icon);
         self.tray.set_status(AppIndicatorStatus::Active);
@@ -31,7 +31,7 @@ impl TrayItemLinux {
 
     }
 
-    pub(crate) fn add_label(&mut self, label: &str) -> Result<(), TIError> {
+    pub fn add_label(&mut self, label: &str) -> Result<(), TIError> {
 
         let item = gtk::MenuItem::new_with_label(label.as_ref());
         item.set_sensitive(false);
@@ -43,7 +43,7 @@ impl TrayItemLinux {
 
     }
 
-    pub(crate) fn add_menu_item<F>(&mut self, label: &str, cb: F) -> Result<(), TIError>
+    pub fn add_menu_item<F>(&mut self, label: &str, cb: F) -> Result<(), TIError>
         where F: Fn() -> () + Send + Sync + 'static {
 
         let item = gtk::MenuItem::new_with_label(label.as_ref());
