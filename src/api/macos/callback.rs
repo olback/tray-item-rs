@@ -1,26 +1,12 @@
-use crate::TIError;
-use std::{
-    mem
-};
-use objc::{
-    sel,
-    sel_impl,
-    msg_send,
-    Message,
-    declare::ClassDecl,
-    runtime::{Class, Object, Sel}
-};
 use libc::c_void;
-use objc_id::Id;
-use objc_foundation::{INSObject, NSObject};
-use cocoa::{
-    base::{nil, YES},
-    appkit::{
-        NSApp, NSApplication, NSApplicationActivateIgnoringOtherApps, NSMenu, NSMenuItem,
-        NSRunningApplication, NSStatusBar, NSStatusItem, NSWindow
-    },
-    foundation::{NSAutoreleasePool, NSString}
+use objc::{
+    declare::ClassDecl,
+    runtime::{Class, Object, Sel},
+    sel, sel_impl, Message,
 };
+use objc_foundation::{INSObject, NSObject};
+use objc_id::Id;
+use std::mem;
 
 pub(crate) enum Callback {}
 unsafe impl Message for Callback {}

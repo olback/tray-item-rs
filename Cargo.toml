@@ -1,6 +1,6 @@
 [package]
 name = "tray-item"
-version = "0.4.0-alpha"
+version = "0.5.0-alpha"
 authors = ["Edwin Svensson <trayitemrs@olback.net>"]
 edition = "2018"
 description = "Super simple API to make tray icons/menus on Windows, Mac & Linux"
@@ -14,7 +14,7 @@ license = "MIT"
 
 [target.'cfg(target_os="linux")'.dependencies]
 libappindicator = "0.5" # Tray icon
-gtk = "0.8"
+gtk = "0.9"
 
 [target.'cfg(target_os="windows")'.dependencies]
 winapi = { version = "0.3", features = ["shellapi", "libloaderapi", "errhandlingapi", "impl-default"] }
@@ -23,9 +23,9 @@ padlock = "0.2"
 # winrt = { git = "https://github.com/microsoft/winrt-rs" } # No crosss compilation available
 
 [target.'cfg(target_os="macos")'.dependencies]
-cocoa = "0.20"
+cocoa = "0.24"
 objc = "0.2"
-core-graphics = "0.19"
+core-graphics = "0.22"
 objc-foundation = "0.1"
 objc_id = "0.1"
 libc = "0.2"
