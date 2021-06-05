@@ -1,55 +1,107 @@
-use {
-    crate::TIError,
-    gtk::prelude::*,
-    libappindicator::{AppIndicator, AppIndicatorStatus},
+use crate::TIError;
+use ksni::{
+    menu::StandardItem,
+    Handle,
 };
+use std::sync::Arc;
+
+struct TrayItem {
+    label: String,
+    action: Option<Arc<dyn Fn() + Send + Sync + 'static>>
+}
+
+struct Tray {
+    title: String,
+    icon: String,
+    actions: Vec<TrayItem>
+}
 
 pub struct TrayItemLinux {
-    tray: AppIndicator,
-    menu: gtk::Menu,
+    tray: Handle<Tray>
+}
+
+impl ksni::Tray for Tray {
+    fn title(&self) -> String {
+        self.title.clone()
+    }
+
+    fn icon_name(&self) -> String {
+        self.icon.clone()
+    }
+
+    fn menu(&self) -> Vec<ksni::MenuItem<Self>> {
+        self.actions.iter().map(|item| {
+            let action = item.action.clone();
+            if let Some(action) = action {
+                StandardItem {
+                    label: item.label.clone(),
+                    activate: Box::new(move |_| {
+                        action();
+                    }),
+                    ..Default::default()
+                }
+                .into()
+            } else {
+                StandardItem {
+                    label: item.label.clone(),
+                    enabled: false,
+                    ..Default::default()
+                }
+                .into()
+            }
+        }).collect()
+    }
 }
 
 impl TrayItemLinux {
     pub fn new(title: &str, icon: &str) -> Result<Self, TIError> {
-        let mut t = Self {
-            tray: AppIndicator::new(title, icon),
-            menu: gtk::Menu::new(),
-        };
+        let svc = ksni::TrayService::new(Tray {
+            title: title.to_string(),
+            icon: icon.to_string(),
+            actions: vec![]
+        });
 
-        t.set_icon(icon)?;
+        let handle = svc.handle();
+        svc.spawn();
 
-        Ok(t)
+        Ok(Self {
+            tray: handle
+        })
     }
 
     pub fn set_icon(&mut self, icon: &str) -> Result<(), TIError> {
-        self.tray.set_icon(icon);
-        self.tray.set_status(AppIndicatorStatus::Active);
+        self.tray.update(|tray| {
+            tray.icon = icon.to_string()
+        });
 
         Ok(())
     }
 
     pub fn add_label(&mut self, label: &str) -> Result<(), TIError> {
-        let item = gtk::MenuItem::with_label(label.as_ref());
-        item.set_sensitive(false);
-        self.menu.append(&item);
-        self.menu.show_all();
-        self.tray.set_menu(&mut self.menu);
+        self.tray.update(move |tray| {
+            tray.actions.push(TrayItem {
+                label: label.to_string(),
+                action: None
+            });
+        });
 
         Ok(())
     }
 
     pub fn add_menu_item<F>(&mut self, label: &str, cb: F) -> Result<(), TIError>
     where
-        F: Fn() -> () + Send + 'static,
+        F: Fn() -> () + Send + Sync + 'static,
     {
-        let item = gtk::MenuItem::with_label(label.as_ref());
-        item.connect_activate(move |_| {
+        let action = Arc::new(move ||{
             cb();
         });
-        self.menu.append(&item);
-        self.menu.show_all();
-        self.tray.set_menu(&mut self.menu);
 
+        self.tray.update(move |tray| {
+            tray.actions.push(TrayItem {
+                label: label.to_string(),
+                action: Some(action.clone())
+            });
+        });
         Ok(())
     }
 }
