@@ -1,10 +1,6 @@
 use tray_item::TrayItem;
-use gtk;
 
 fn main() {
-
-    gtk::init().unwrap();
-
     let mut tray = TrayItem::new("Tray Example", "accessories-calculator").unwrap();
 
     tray.add_label("Tray Label").unwrap();
@@ -14,9 +10,8 @@ fn main() {
     }).unwrap();
 
     tray.add_menu_item("Quit", || {
-        gtk::main_quit();
+        std::process::exit(0);
     }).unwrap();
 
-    gtk::main();
-
+    std::io::stdin().read_line(&mut String::new()).unwrap();
 }
