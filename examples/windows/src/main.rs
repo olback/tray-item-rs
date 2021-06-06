@@ -1,11 +1,11 @@
-use {std::sync::mpsc, tray_item::TrayItem};
+use {std::sync::mpsc, tray_item::TrayItem, IconSource};
 
 enum Message {
     Quit,
 }
 
 fn main() {
-    let mut tray = TrayItem::new("Tray Example", "my-icon-name").unwrap();
+    let mut tray = TrayItem::new("Tray Example", IconSource::Resource("name-of-icon-in-rc-file")).unwrap();
 
     tray.add_label("Tray Label").unwrap();
 
@@ -21,6 +21,8 @@ fn main() {
         tx.send(Message::Quit).unwrap();
     })
     .unwrap();
+
+    tray.set_icon(IconSource::Resource("another-name-from-rc-file")).unwrap();
 
     loop {
         match rx.recv() {

@@ -15,6 +15,18 @@ pub enum IconSource {
     },
 }
 
+impl IconSource {
+    pub fn as_str(&self) -> &str {
+        match self {
+            IconSource::Resource(res) => {
+                res
+            },
+            #[allow(unreachable_patterns)]
+            _ => unimplemented!()
+        }
+    }
+}
+
 impl TrayItem {
     pub fn new(title: &str, icon: IconSource) -> Result<Self, TIError> {
         Ok(Self(api::TrayItemImpl::new(title, icon)?))
