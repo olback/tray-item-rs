@@ -1,4 +1,4 @@
-use crate::TIError;
+use crate::{TIError, IconSource};
 use cocoa::{
     appkit::{
         NSApp, NSApplication, NSApplicationActivateIgnoringOtherApps, NSImage, NSMenu, NSMenuItem,
@@ -22,10 +22,11 @@ pub struct TrayItemMacOS {
 }
 
 impl TrayItemMacOS {
-    pub fn new(title: &str, icon: &str) -> Result<Self, TIError> {
+    pub fn new(title: &str, icon: IconSource) -> Result<Self, TIError> {
         unsafe {
             let pool = NSAutoreleasePool::new(nil);
 
+            let icon = icon.as_str();
             let icon = Some(icon).filter(|icon| !icon.is_empty());
             let icon = icon.map(|icon_name| {
                 let icon_name = NSString::alloc(nil).init_str(icon_name);
@@ -46,9 +47,9 @@ impl TrayItemMacOS {
         }
     }
 
-    pub fn set_icon(&mut self, icon: &str) -> Result<(), TIError> {
+    pub fn set_icon(&mut self, icon: IconSource) -> Result<(), TIError> {
         unsafe {
-            let icon_name = NSString::alloc(nil).init_str(icon);
+            let icon_name = NSString::alloc(nil).init_str(icon.as_str());
             self.icon = Some(NSImage::imageNamed_(NSImage::alloc(nil), icon_name));
         }
         Ok(())

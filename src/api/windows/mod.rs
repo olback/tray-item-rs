@@ -1,7 +1,7 @@
 // Most of this code is taken from https://github.com/qdot/systray-rs/blob/master/src/api/win32/mod.rs
 // Open source is great :)
 
-use crate::TIError;
+use crate::{TIError, IconSource};
 use std::{
     self,
     cell::RefCell,
@@ -47,7 +47,7 @@ pub struct TrayItemWindows {
 
 impl TrayItemWindows {
 
-    pub fn new(title: &str, icon: &str) -> Result<Self, TIError> {
+    pub fn new(title: &str, icon: IconSource) -> Result<Self, TIError> {
 
         let entries = Arc::new(Mutex::new(Vec::new()));
         let (tx, rx) = channel();
@@ -135,13 +135,10 @@ impl TrayItemWindows {
         w.set_icon(icon)?;
 
         Ok(w)
-
     }
 
-    pub fn set_icon(&self, icon: &str) -> Result<(), TIError> {
-
-        self.set_icon_from_resource(icon)
-
+    pub fn set_icon(&self, icon: IconSource) -> Result<(), TIError> {
+        self.set_icon_from_resource(icon.as_str())
     }
 
     pub fn add_label(&mut self, label: &str) -> Result<(), TIError> {

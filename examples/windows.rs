@@ -1,8 +1,8 @@
-use tray_item::TrayItem;
+use tray_item::{TrayItem, IconSource};
 
 fn main() {
 
-    let mut tray = TrayItem::new("Tray Example", "name-of-icon-in-rc-file").unwrap();
+    let mut tray = TrayItem::new("Tray Example", IconSource::Resource("name-of-icon-in-rc-file")).unwrap();
 
     tray.add_label("Tray Label").unwrap();
 
@@ -15,7 +15,7 @@ fn main() {
         std::process::exit(0);
     }).unwrap();
 
-    tray.set_icon("another-name-from-rc-file").unwrap();
+    tray.set_icon(IconSource::Resource("another-name-from-rc-file")).unwrap();
 
     std::io::stdin().read_line(&mut String::new()).unwrap();
 
