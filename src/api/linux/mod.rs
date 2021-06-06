@@ -1,8 +1,5 @@
-use crate::TIError;
-use ksni::{
-    menu::StandardItem,
-    Handle,
-};
+use crate::{TIError, IconSource};
+use ksni::{menu::StandardItem, Handle, Icon};
 use std::sync::Arc;
 
 struct TrayItem {
@@ -12,7 +9,7 @@ struct TrayItem {
 
 struct Tray {
     title: String,
-    icon: String,
+    icon: IconSource,
     actions: Vec<TrayItem>
 }
 
@@ -26,7 +23,23 @@ impl ksni::Tray for Tray {
     }
 
     fn icon_name(&self) -> String {
-        self.icon.clone()
+        match &self.icon {
+            IconSource::Resource(name) => name.to_string(),
+            IconSource::Data{..} => String::new(),
+        }
+    }
+
+    fn icon_pixmap(&self) -> Vec<Icon> {
+        match &self.icon {
+            IconSource::Resource(_) => vec![],
+            IconSource::Data{data, height, width} => {
+                vec![Icon {
+                    width: *height,
+                    height: *width,
+                    data: data.clone()
+                }]
+            },
+        }
     }
 
     fn menu(&self) -> Vec<ksni::MenuItem<Self>> {
@@ -54,10 +67,10 @@ impl ksni::Tray for Tray {
 }
 
 impl TrayItemLinux {
-    pub fn new(title: &str, icon: &str) -> Result<Self, TIError> {
+    pub fn new(title: &str, icon: IconSource) -> Result<Self, TIError> {
         let svc = ksni::TrayService::new(Tray {
             title: title.to_string(),
-            icon: icon.to_string(),
+            icon,
             actions: vec![]
         });
 
@@ -69,9 +82,9 @@ impl TrayItemLinux {
         })
     }
 
-    pub fn set_icon(&mut self, icon: &str) -> Result<(), TIError> {
+    pub fn set_icon(&mut self, icon: IconSource) -> Result<(), TIError> {
         self.tray.update(|tray| {
-            tray.icon = icon.to_string()
+            tray.icon = icon.clone()
         });
 
         Ok(())
