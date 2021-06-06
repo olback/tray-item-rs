@@ -1,7 +1,7 @@
-use tray_item::TrayItem;
+use tray_item::{TrayItem, IconSource};
 
 fn main() {
-    let mut tray = TrayItem::new("Tray Example", "accessories-calculator").unwrap();
+    let mut tray = TrayItem::new("Tray Example", IconSource::Resource("accessories-calculator")).unwrap();
 
     tray.add_label("Tray Label").unwrap();
 

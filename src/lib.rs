@@ -4,9 +4,20 @@ pub use error::TIError;
 
 pub struct TrayItem(api::TrayItemImpl);
 
+#[derive(Clone)]
+pub enum IconSource {
+    Resource(&'static str),
+    #[cfg(target_os = "linux")]
+    Data {
+        height: i32,
+        width: i32,
+        data: Vec<u8>
+    },
+}
+
 impl TrayItem {
 
-    pub fn new(title: &str, icon: &str) -> Result<Self, TIError> {
+    pub fn new(title: &str, icon: IconSource) -> Result<Self, TIError> {
 
         Ok(
             Self(
@@ -16,7 +27,7 @@ impl TrayItem {
 
     }
 
-    pub fn set_icon(&mut self, icon: &str) -> Result<(), TIError> {
+    pub fn set_icon(&mut self, icon: IconSource) -> Result<(), TIError> {
 
         self.0.set_icon(icon)
 
