@@ -54,6 +54,16 @@ impl TrayItemMacOS {
         Ok(())
     }
 
+    pub fn set_icon_template(&mut self, icon: &str) -> Result<(), TIError> {
+        unsafe {
+            let icon_name = NSString::alloc(nil).init_str(icon);
+            let image = NSImage::imageNamed_(NSImage::alloc(nil), icon_name);
+            let _: () = msg_send![image, setTemplate: YES];
+            self.icon = Some(image);
+        }
+        Ok(())
+    }
+
     pub fn add_label(&mut self, label: &str) -> Result<(), TIError> {
         unsafe {
             let no_key = NSString::alloc(nil).init_str(""); // TODO want this eventually
