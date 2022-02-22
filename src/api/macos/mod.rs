@@ -1,17 +1,19 @@
-use crate::TIError;
-use cocoa::{
-    appkit::{
-        NSApp, NSApplication, NSApplicationActivateIgnoringOtherApps, NSImage, NSMenu, NSMenuItem,
-        NSRunningApplication, NSStatusBar, NSStatusItem, NSWindow,
+use {
+    crate::TIError,
+    callback::*,
+    cocoa::{
+        appkit::{
+            NSApp, NSApplication, NSApplicationActivateIgnoringOtherApps, NSImage, NSMenu,
+            NSMenuItem, NSRunningApplication, NSStatusBar, NSStatusItem, NSWindow,
+        },
+        base::{nil, YES},
+        foundation::{NSAutoreleasePool, NSString},
     },
-    base::{nil, YES},
-    foundation::{NSAutoreleasePool, NSString},
+    objc::{msg_send, sel, sel_impl},
+    std::thread::JoinHandle,
 };
-use objc::{msg_send, sel, sel_impl};
-use std::thread::JoinHandle;
 
 mod callback;
-use callback::*;
 
 pub struct TrayItemMacOS {
     name: String,
@@ -81,7 +83,7 @@ impl TrayItemMacOS {
 
     pub fn add_menu_item<F>(&mut self, label: &str, cb: F) -> Result<(), TIError>
     where
-        F: Fn() -> () + Send + Sync + 'static,
+        F: Fn() -> () + Send + 'static,
     {
         let cb_obj = Callback::from(Box::new(cb));
 

@@ -1,12 +1,14 @@
-use libc::c_void;
-use objc::{
-    declare::ClassDecl,
-    runtime::{Class, Object, Sel},
-    sel, sel_impl, Message,
+use {
+    libc::c_void,
+    objc::{
+        declare::ClassDecl,
+        runtime::{Class, Object, Sel},
+        sel, sel_impl, Message,
+    },
+    objc_foundation::{INSObject, NSObject},
+    objc_id::Id,
+    std::mem,
 };
-use objc_foundation::{INSObject, NSObject};
-use objc_id::Id;
-use std::mem;
 
 pub(crate) enum Callback {}
 unsafe impl Message for Callback {}

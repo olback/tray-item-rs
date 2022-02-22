@@ -1,6 +1,6 @@
 [package]
 name = "tray-item"
-version = "0.6.0"
+version = "0.7.0"
 authors = ["Edwin Svensson <trayitemrs@olback.net>"]
 edition = "2018"
 description = "Super simple API to make tray icons/menus on Windows, Mac & Linux"
@@ -13,8 +13,8 @@ license = "MIT"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [target.'cfg(target_os="linux")'.dependencies]
-libappindicator = "0.6" # Tray icon
-gtk = "0.14"
+libappindicator = "0.7" # Tray icon
+gtk = "0.15"
 
 [target.'cfg(target_os="windows")'.dependencies]
 winapi = { version = "0.3", features = ["shellapi", "libloaderapi", "errhandlingapi", "impl-default"] }

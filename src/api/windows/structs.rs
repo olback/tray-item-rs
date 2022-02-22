@@ -1,5 +1,10 @@
-use std::sync::mpsc::Sender;
-use winapi::shared::{minwindef::HINSTANCE, windef::{HMENU, HWND}};
+use {
+    std::sync::mpsc::Sender,
+    winapi::shared::{
+        minwindef::HINSTANCE,
+        windef::{HMENU, HWND},
+    },
+};
 
 #[derive(Clone)]
 pub(crate) struct WindowInfo {

@@ -1,26 +1,23 @@
-use super::*;
-use crate::TIError;
-use std::{
-    self,
-    ffi::OsStr,
-    os::windows::ffi::OsStrExt
-};
-use winapi::{
-    ctypes::{c_ulong, c_ushort},
-    shared::{
-        basetsd::ULONG_PTR,
-        guiddef::GUID,
-        minwindef::{DWORD, HINSTANCE, LPARAM, LRESULT, UINT, WPARAM},
-        ntdef::LPCWSTR,
-        windef::{HBITMAP, HBRUSH, HICON, HMENU, HWND, POINT},
-    },
-    um::{
-        errhandlingapi, libloaderapi,
-        shellapi::{self, NIF_MESSAGE, NIM_ADD, NOTIFYICONDATAW},
-        winuser::{
-            self, CW_USEDEFAULT, MENUINFO, MENUITEMINFOW,
-            MIM_APPLYTOSUBMENUS, MIM_STYLE, MNS_NOTIFYBYPOS, WM_USER, WNDCLASSW,
-            WS_OVERLAPPEDWINDOW,
+use {
+    super::*,
+    crate::TIError,
+    std::{self, ffi::OsStr, os::windows::ffi::OsStrExt},
+    winapi::{
+        ctypes::{c_ulong, c_ushort},
+        shared::{
+            basetsd::ULONG_PTR,
+            guiddef::GUID,
+            minwindef::{DWORD, HINSTANCE, LPARAM, LRESULT, UINT, WPARAM},
+            ntdef::LPCWSTR,
+            windef::{HBITMAP, HBRUSH, HICON, HMENU, HWND, POINT},
+        },
+        um::{
+            errhandlingapi, libloaderapi,
+            shellapi::{self, NIF_MESSAGE, NIM_ADD, NOTIFYICONDATAW},
+            winuser::{
+                self, CW_USEDEFAULT, MENUINFO, MENUITEMINFOW, MIM_APPLYTOSUBMENUS, MIM_STYLE,
+                MNS_NOTIFYBYPOS, WM_USER, WNDCLASSW, WS_OVERLAPPEDWINDOW,
+            },
         },
     },
 };
@@ -33,7 +30,11 @@ pub(crate) fn to_wstring(str: &str) -> Vec<u16> {
 }
 
 pub(crate) unsafe fn get_win_os_error(msg: &str) -> TIError {
-    TIError::new_with_location(format!("{}: {}", &msg, errhandlingapi::GetLastError()), std::file!(), std::line!())
+    TIError::new_with_location(
+        format!("{}: {}", &msg, errhandlingapi::GetLastError()),
+        std::file!(),
+        std::line!(),
+    )
 }
 
 pub(crate) unsafe extern "system" fn window_proc(
@@ -49,10 +50,7 @@ pub(crate) unsafe extern "system" fn window_proc(
             if let Some(stash) = stash {
                 let menu_id = winuser::GetMenuItemID(stash.info.hmenu, w_param as i32) as i32;
                 if menu_id != -1 {
-                    stash
-                        .tx
-                        .send(WindowsTrayEvent(menu_id as u32))
-                        .ok();
+                    stash.tx.send(WindowsTrayEvent(menu_id as u32)).ok();
                 }
             }
         });

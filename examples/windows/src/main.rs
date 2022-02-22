@@ -1,4 +1,8 @@
-use tray_item::TrayItem;
+use {std::sync::mpsc, tray_item::TrayItem};
+
+enum Message {
+    Quit,
+}
 
 fn main() {
     let mut tray = TrayItem::new("Tray Example", "my-icon-name").unwrap();
@@ -10,11 +14,18 @@ fn main() {
     })
     .unwrap();
 
-    tray.add_menu_item("Quit", || {
+    let (tx, rx) = mpsc::channel();
+
+    tray.add_menu_item("Quit", move || {
         println!("Quit");
-        std::process::exit(0);
+        tx.send(Message::Quit).unwrap();
     })
     .unwrap();
 
-    std::io::stdin().read_line(&mut String::new()).unwrap();
+    loop {
+        match rx.recv() {
+            Ok(Message::Quit) => break,
+            _ => {}
+        }
+    }
 }

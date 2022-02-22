@@ -1,6 +1,8 @@
-use crate::TIError;
-use gtk::prelude::*;
-use libappindicator::{AppIndicator, AppIndicatorStatus};
+use {
+    crate::TIError,
+    gtk::prelude::*,
+    libappindicator::{AppIndicator, AppIndicatorStatus},
+};
 
 pub struct TrayItemLinux {
     tray: AppIndicator,
@@ -38,7 +40,7 @@ impl TrayItemLinux {
 
     pub fn add_menu_item<F>(&mut self, label: &str, cb: F) -> Result<(), TIError>
     where
-        F: Fn() -> () + Send + Sync + 'static,
+        F: Fn() -> () + Send + 'static,
     {
         let item = gtk::MenuItem::with_label(label.as_ref());
         item.connect_activate(move |_| {
