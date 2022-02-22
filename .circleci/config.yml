@@ -38,7 +38,7 @@ jobs:
 
 workflows:
   version: 2
-  test:
+  check:
     jobs:
       - check 
 
