@@ -2,23 +2,21 @@ name: Cargo Check
 
 on:
   push:
-    branches: [ master ]
+    branches: [master]
   pull_request:
-    branches: [ master ]
+    branches: [master]
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
   check:
-
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macos-latest, windows-latest, ubuntu-20.04]
+        os: [macos-latest, windows-latest]
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Build
-      run: cargo check --verbose
-
+      - uses: actions/checkout@v2
+      - name: Build
+        run: cargo check --verbose

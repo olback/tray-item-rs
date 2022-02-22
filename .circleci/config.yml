@@ -1,0 +1,44 @@
+version: 2
+
+jobs:
+  check:
+    docker:
+      - image: olback/rust-gtk-linux
+
+    steps:
+      - checkout
+
+      - run:
+          name: Change Permissions for Cargo Cache
+          command: |
+                    if [ -d "/usr/local/cargo" ]; then
+                      sudo chown -R circleci:circleci /usr/local/cargo
+                    fi
+      - restore_cache:
+          key: stable-cache-v1-{{ checksum "Cargo.toml" }}
+
+      - run:
+          name: Show Version
+          command: |
+                    rustc --version --verbose
+                    rustup --version
+                    cargo --version --verbose
+
+      - run:
+          name: Run Check
+          command: cargo check --verbose 
+
+      - save_cache:
+          key: stable-cache-v1-{{ checksum "Cargo.toml" }}
+          paths:
+            - "~/.cargo/"
+            - "~/.rustup/"
+            - "./target"
+            - "/usr/local/cargo"
+
+workflows:
+  version: 2
+  test:
+    jobs:
+      - check 
+
