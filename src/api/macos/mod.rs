@@ -73,10 +73,10 @@ impl TrayItemMacOS {
             let no_key = NSString::alloc(nil).init_str(""); // TODO want this eventually
             let itemtitle = NSString::alloc(nil).init_str(label);
             let action = sel!(call);
-            let item = NSMenuItem::alloc(nil)
+            self.menu_item = NSMenuItem::alloc(nil)
                 .initWithTitle_action_keyEquivalent_(itemtitle, action, no_key);
-            let _: () = msg_send![item, setTitle: itemtitle];
-            NSMenu::addItem_(self.menu, item);
+            let _: () = msg_send![self.menu_item, setTitle: itemtitle];
+            NSMenu::addItem_(self.menu, self.menu_item);
         }
 
         Ok(())
@@ -85,7 +85,7 @@ impl TrayItemMacOS {
     pub fn set_label(&mut self, label: &str) -> Result<(), TIError> {
         unsafe {
             let itemtitle = NSString::alloc(nil).init_str(label);
-            let _: () = msg_send![self.menu, setTitle: itemtitle];
+            let _: () = msg_send![self.menu_item, setTitle: itemtitle];
         }
 
         Ok(())
