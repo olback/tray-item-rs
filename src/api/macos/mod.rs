@@ -85,8 +85,9 @@ impl TrayItemMacOS {
     pub fn set_label(&mut self, label: &str) -> Result<(), TIError> {
         unsafe {
             let itemtitle = NSString::alloc(nil).init_str(label);
-            let _: () = msg_send![self.menu_item, setTitle: itemtitle];
-            let _: () = msg_send![self.menu, setTitle: itemtitle];
+            self.menu_item.setTitle_(itemtitle);
+//            let _: () = msg_send![self.menu_item, setTitle: itemtitle];
+  //          let _: () = msg_send![self.menu, setTitle: itemtitle];
             let _: () = msg_send![self.menu, itemChanged: self.menu_item];
         }
 
