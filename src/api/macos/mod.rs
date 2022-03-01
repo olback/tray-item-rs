@@ -86,8 +86,9 @@ impl TrayItemMacOS {
         unsafe {
             let itemtitle = NSString::alloc(nil).init_str(label);
             self.menu_item.setTitle_(itemtitle);
-//            let _: () = msg_send![self.menu_item, setTitle: itemtitle];
-  //          let _: () = msg_send![self.menu, setTitle: itemtitle];
+            let _: () = msg_send![self.menu_item, setTitle: itemtitle];
+            self.menu.setTitle_(itemtitle);
+            let _: () = msg_send![self.menu, setTitle: itemtitle];
             let _: () = msg_send![self.menu, itemChanged: self.menu_item];
         }
 
