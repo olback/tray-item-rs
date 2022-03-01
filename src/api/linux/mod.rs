@@ -38,6 +38,10 @@ impl TrayItemLinux {
         Ok(())
     }
 
+    pub fn set_label(&mut self, label: &str) -> Result<(), TIError> {
+        panic!("TODO");
+    }
+
     pub fn add_menu_item<F>(&mut self, label: &str, cb: F) -> Result<(), TIError>
     where
         F: Fn() -> () + Send + 'static,
