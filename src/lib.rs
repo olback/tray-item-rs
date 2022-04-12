@@ -2,6 +2,8 @@ mod api;
 mod error;
 pub use error::TIError;
 
+#[cfg(target_os = "macos")]
+pub use api::IconType;
 pub struct TrayItem(api::TrayItemImpl);
 
 impl TrayItem {

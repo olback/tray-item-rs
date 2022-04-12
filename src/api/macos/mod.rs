@@ -7,14 +7,14 @@ use {
             NSMenuItem, NSRunningApplication, NSStatusBar, NSStatusItem, NSWindow,
         },
         base::{nil, YES},
-        foundation::{NSAutoreleasePool, NSString},
+        foundation::{NSAutoreleasePool, NSString,NSData,NSSize},
     },
     objc::{msg_send, sel, sel_impl},
     std::thread::JoinHandle,
 };
 
 mod callback;
-
+use crate::api::IconType;
 pub struct TrayItemMacOS {
     name: String,
     menu: *mut objc::runtime::Object,
@@ -22,6 +22,7 @@ pub struct TrayItemMacOS {
     icon: Option<*mut objc::runtime::Object>,
     main_thread: Option<JoinHandle<()>>,
 }
+
 
 impl TrayItemMacOS {
     pub fn new(title: &str, icon: &str) -> Result<Self, TIError> {
@@ -56,10 +57,21 @@ impl TrayItemMacOS {
         Ok(())
     }
 
-    pub fn set_icon_template(&mut self, icon: &str) -> Result<(), TIError> {
+    pub fn set_icon_template(&mut self, icon:  IconType) -> Result<(), TIError> {
         unsafe {
-            let icon_name = NSString::alloc(nil).init_str(icon);
-            let image = NSImage::imageNamed_(NSImage::alloc(nil), icon_name);
+            let image = match icon {
+                IconType::Blob(data) => {
+                    let nsdata = NSData::dataWithBytes_length_(nil, data.as_ptr() as *const std::os::raw::c_void,data.len() as u64);
+                    let image = NSImage::initWithData_(NSImage::alloc(nil),nsdata);
+                    let size = NSSize::new(20.0,20.0);
+                    let _: () = msg_send![image, setSize: size];
+                    image
+                },
+                IconType::Name(icon) => {
+                    let icon_name = NSString::alloc(nil).init_str(icon);
+                    NSImage::imageNamed_(NSImage::alloc(nil), icon_name)
+                }
+            };
             let _: () = msg_send![image, setTemplate: YES];
             self.icon = Some(image);
         }

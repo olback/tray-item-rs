@@ -16,3 +16,9 @@ pub type TrayItemImpl = windows::TrayItemWindows;
 
 #[cfg(target_os = "macos")]
 pub type TrayItemImpl = macos::TrayItemMacOS;
+
+#[cfg(target_os = "macos")]
+pub enum  IconType {
+    Blob(&'static [u8]),
+    Name(&'static str)
+}
