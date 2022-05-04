@@ -24,6 +24,10 @@ impl TrayItem {
         self.0.add_menu_item(label, cb)
     }
 
+    pub fn add_separator(&mut self) -> Result<(), TIError> {
+        self.0.add_separator()
+    }
+
     pub fn inner_mut(&mut self) -> &mut api::TrayItemImpl {
         &mut self.0
     }
