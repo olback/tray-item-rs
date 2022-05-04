@@ -101,6 +101,10 @@ impl TrayItemMacOS {
         Ok(())
     }
 
+    pub fn add_separator(&mut self) -> Result<(), TIError> {
+        panic!("TODO")
+    }
+
     // private
 
     pub fn add_quit_item(&mut self, label: &str) {
