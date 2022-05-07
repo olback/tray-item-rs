@@ -52,8 +52,4 @@ impl TrayItemLinux {
 
         Ok(())
     }
-
-    pub fn add_separator(&mut self) -> Result<(), TIError> {
-        panic!("TODO")
-    }
 }
