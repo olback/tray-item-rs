@@ -19,8 +19,8 @@ use {
         um::{
             shellapi::{self, NIF_ICON, NIF_TIP, NIM_DELETE, NIM_MODIFY, NOTIFYICONDATAW},
             winuser::{
-                self, IMAGE_ICON, MENUITEMINFOW, MFS_DISABLED, MFS_UNHILITE, MFT_STRING,
-                MIIM_FTYPE, MIIM_ID, MIIM_STATE, MIIM_STRING, WM_DESTROY,
+                self, IMAGE_ICON, MENUITEMINFOW, MFS_DISABLED, MFS_UNHILITE, MFT_SEPARATOR,
+                MFT_STRING, MIIM_FTYPE, MIIM_ID, MIIM_STATE, MIIM_STRING, WM_DESTROY,
             },
         },
     },
@@ -163,6 +163,26 @@ impl TrayItemWindows {
         item.wID = item_idx;
         item.dwTypeData = st.as_mut_ptr();
         item.cch = (label.len() * 2) as u32;
+        unsafe {
+            if winuser::InsertMenuItemW(self.info.hmenu, item_idx, 1, &item as *const MENUITEMINFOW)
+                == 0
+            {
+                return Err(get_win_os_error("Error inserting menu item"));
+            }
+        }
+        Ok(())
+    }
+
+    pub fn add_separator(&mut self) -> Result<(), TIError> {
+        let item_idx = padlock::mutex_lock(&self.entries, |entries| {
+            let len = entries.len();
+            entries.push(None);
+            len
+        }) as u32;
+        let mut item = get_menu_item_struct();
+        item.fMask = MIIM_FTYPE | MIIM_ID | MIIM_STATE;
+        item.fType = MFT_SEPARATOR;
+        item.wID = item_idx;
         unsafe {
             if winuser::InsertMenuItemW(self.info.hmenu, item_idx, 1, &item as *const MENUITEMINFOW)
                 == 0
