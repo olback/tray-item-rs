@@ -1,7 +1,9 @@
-use {std::sync::mpsc, tray_item::TrayItem, IconSource};
+use {std::sync::mpsc, tray_item::{TrayItem, IconSource}};
 
 enum Message {
     Quit,
+	Green,
+	Red
 }
 
 fn main() {
@@ -14,19 +16,40 @@ fn main() {
     })
     .unwrap();
 
-    let (tx, rx) = mpsc::channel();
+    let (tx, rx) = mpsc::sync_channel::<Message>(2);
 
+    let quit_tx = tx.clone();
     tray.add_menu_item("Quit", move || {
-        println!("Quit");
-        tx.send(Message::Quit).unwrap();
+        quit_tx.send(Message::Quit).unwrap();
     })
     .unwrap();
 
-    tray.set_icon(IconSource::Resource("another-name-from-rc-file")).unwrap();
+    let red_tx = tx.clone();
+    tray.add_menu_item("Red", move || {
+        red_tx.send(Message::Red).unwrap();
+    })
+    .unwrap();
+
+    let green_tx = tx.clone();
+    tray.add_menu_item("Green", move || {
+        green_tx.send(Message::Green).unwrap();
+    })
+    .unwrap();
 
     loop {
         match rx.recv() {
-            Ok(Message::Quit) => break,
+            Ok(Message::Quit) => {
+                println!("Quit");
+                break
+            },
+            Ok(Message::Red) => {
+                println!("Red");
+                tray.set_icon(IconSource::Resource("another-name-from-rc-file")).unwrap();
+            },
+            Ok(Message::Green) => {
+                println!("Green");
+                tray.set_icon(IconSource::Resource("name-of-icon-in-rc-file")).unwrap()
+            },
             _ => {}
         }
     }
