@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="">
+    <file alias="name-of-icon-in-rc-file">tray_icon-red.png</file>
+    <file alias="another-name-from-rc-file">tray_icon-green.png</file>
+  </gresource>
+</gresources>
