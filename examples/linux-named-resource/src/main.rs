@@ -1,6 +1,8 @@
 use tray_item::{TrayItem, IconSource};
 
 fn main() {
+    gtk::init().unwrap();
+
     let mut tray = TrayItem::new("Tray Example", IconSource::Resource("accessories-calculator")).unwrap();
 
     tray.add_label("Tray Label").unwrap();
@@ -10,8 +12,8 @@ fn main() {
     }).unwrap();
 
     tray.add_menu_item("Quit", || {
-        std::process::exit(0);
+        gtk::main_quit();
     }).unwrap();
 
-    std::io::stdin().read_line(&mut String::new()).unwrap();
+    gtk::main();
 }
