@@ -187,7 +187,7 @@ impl TrayItemWindows {
             if winuser::InsertMenuItemW(self.info.hmenu, item_idx, 1, &item as *const MENUITEMINFOW)
                 == 0
             {
-                return Err(get_win_os_error("Error inserting menu item"));
+                return Err(get_win_os_error("Error inserting menu separator"));
             }
         }
         Ok(())

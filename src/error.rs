@@ -1,3 +1,5 @@
+use std::error;
+
 #[derive(Debug)]
 struct Location {
     file: &'static str,
@@ -9,6 +11,8 @@ pub struct TIError {
     cause: String,
     location: Option<Location>,
 }
+
+impl error::Error for TIError {}
 
 impl TIError {
     #[allow(dead_code)]
