@@ -17,6 +17,10 @@ impl TrayItem {
         self.0.add_label(label)
     }
 
+    pub fn set_label(&mut self, label: &str) -> Result<(), TIError> {
+        self.0.set_label(label)
+    }
+
     pub fn add_menu_item<F>(&mut self, label: &str, cb: F) -> Result<(), TIError>
     where
         F: Fn() -> () + Send + 'static,
