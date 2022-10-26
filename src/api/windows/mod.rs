@@ -199,7 +199,7 @@ impl TrayItemWindows {
         // Add Tooltip
         // Gross way to convert String to [i8; 128]
         // TODO: Clean up conversion, test for length so we don't panic at runtime
-        let tt = tooltip.as_bytes().clone();
+        let tt = to_wstring(tooltip);
         let mut nid = get_nid_struct(&self.info.hwnd);
         for i in 0..tt.len() {
             nid.szTip[i] = tt[i] as u16;
