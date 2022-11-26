@@ -49,7 +49,6 @@ pub struct TrayItemWindows {
 impl TrayItemWindows {
     pub fn new(title: &str, icon: &str) -> Result<Self, TIError> {
         let entries = Arc::new(Mutex::new(Vec::new()));
-        let (tx, rx) = channel();
         let (event_tx, event_rx) = channel::<WindowsTrayEvent>();
 
         let entries_clone = Arc::clone(&entries);
@@ -67,6 +66,8 @@ impl TrayItemWindows {
                 })
             }
         });
+
+        let (tx, rx) = channel();
 
         let event_tx_clone = event_tx.clone();
         let windows_loop = thread::spawn(move || unsafe {
@@ -135,6 +136,7 @@ impl TrayItemWindows {
             cch: (label.len() * 2) as u32,
             ..Default::default()
         };
+
         unsafe {
             if !InsertMenuItemW(self.info.hmenu, item_idx, true, &item).as_bool() {
                 return Err(get_win_os_error("Error inserting menu item"));
@@ -163,6 +165,7 @@ impl TrayItemWindows {
             cch: (label.len() * 2) as u32,
             ..Default::default()
         };
+
         unsafe {
             if !InsertMenuItemW(self.info.hmenu, item_idx, true, &item).as_bool() {
                 return Err(get_win_os_error("Error inserting menu item"));
@@ -177,6 +180,7 @@ impl TrayItemWindows {
             entries.push(None);
             len
         }) as u32;
+
         let item = MENUITEMINFOW {
             cbSize: mem::size_of::<MENUITEMINFOW>() as u32,
             fMask: MIIM_FTYPE | MIIM_ID | MIIM_STATE,
@@ -184,6 +188,7 @@ impl TrayItemWindows {
             wID: item_idx,
             ..Default::default()
         };
+
         unsafe {
             if !InsertMenuItemW(self.info.hmenu, item_idx, true, &item).as_bool() {
                 return Err(get_win_os_error("Error inserting menu separator"));
@@ -192,17 +197,12 @@ impl TrayItemWindows {
         Ok(())
     }
 
-    // others
-
     fn set_tooltip(&self, tooltip: &str) -> Result<(), TIError> {
         let wide_tooltip = to_wstring(tooltip);
-
-        // Ensure the tooltip is not too long
         if wide_tooltip.len() > 128 {
             return Err(TIError::new("The tooltip may not exceed 127 wide bytes"));
         }
 
-        // Add Tooltip
         let mut nid = NOTIFYICONDATAW {
             cbSize: mem::size_of::<NOTIFYICONDATAW>() as u32,
             hWnd: self.info.hwnd,
@@ -211,6 +211,7 @@ impl TrayItemWindows {
             ..Default::default()
         };
         nid.szTip[..wide_tooltip.len()].copy_from_slice(&wide_tooltip);
+
         unsafe {
             if !Shell_NotifyIconW(NIM_MODIFY, &nid).as_bool() {
                 return Err(get_win_os_error("Error setting tooltip"));
@@ -237,15 +238,16 @@ impl TrayItemWindows {
     }
 
     fn _set_icon(&self, icon: HICON) -> Result<(), TIError> {
+        let nid = NOTIFYICONDATAW {
+            cbSize: mem::size_of::<NOTIFYICONDATAW>() as u32,
+            hWnd: self.info.hwnd,
+            uID: 1,
+            uFlags: NIF_ICON,
+            hIcon: icon,
+            ..Default::default()
+        };
+
         unsafe {
-            let nid = NOTIFYICONDATAW {
-                cbSize: mem::size_of::<NOTIFYICONDATAW>() as u32,
-                hWnd: self.info.hwnd,
-                uID: 1,
-                uFlags: NIF_ICON,
-                hIcon: icon,
-                ..Default::default()
-            };
             if !Shell_NotifyIconW(NIM_MODIFY, &nid).as_bool() {
                 return Err(get_win_os_error("Error setting icon"));
             }
@@ -257,9 +259,11 @@ impl TrayItemWindows {
         unsafe {
             PostMessageW(self.info.hwnd, WM_DESTROY, WPARAM(0), LPARAM(0));
         }
+
         if let Some(t) = self.windows_loop.take() {
             t.join().ok();
         }
+
         if let Some(t) = self.event_loop.take() {
             self.event_tx.send(WindowsTrayEvent(u32::MAX)).ok();
             t.join().ok();
@@ -267,14 +271,15 @@ impl TrayItemWindows {
     }
 
     pub fn shutdown(&self) -> Result<(), TIError> {
+        let nid = NOTIFYICONDATAW {
+            cbSize: mem::size_of::<NOTIFYICONDATAW>() as u32,
+            hWnd: self.info.hwnd,
+            uID: 1,
+            uFlags: NIF_ICON,
+            ..Default::default()
+        };
+
         unsafe {
-            let nid = NOTIFYICONDATAW {
-                cbSize: mem::size_of::<NOTIFYICONDATAW>() as u32,
-                hWnd: self.info.hwnd,
-                uID: 1,
-                uFlags: NIF_ICON,
-                ..Default::default()
-            };
             if !Shell_NotifyIconW(NIM_DELETE, &nid).as_bool() {
                 return Err(get_win_os_error("Error deleting icon from menu"));
             }

@@ -58,7 +58,9 @@ pub(crate) unsafe extern "system" fn window_proc(
         if !GetCursorPos(&mut point).as_bool() {
             return LRESULT(1);
         }
+
         SetForegroundWindow(h_wnd);
+
         WININFO_STASH.with(|stash| {
             let stash = stash.borrow();
             let stash = stash.as_ref();
@@ -75,18 +77,22 @@ pub(crate) unsafe extern "system" fn window_proc(
             }
         });
     }
+
     if msg == WM_DESTROY {
         PostQuitMessage(0);
     }
+
     DefWindowProcW(h_wnd, msg, w_param, l_param)
 }
 
 pub(crate) unsafe fn init_window() -> Result<WindowInfo, TIError> {
-    let class_name = to_wstring("my_window");
     let hinstance = match GetModuleHandleW(None) {
         Ok(hinstance) => hinstance,
         Err(_) => return Err(get_win_os_error("Error getting module handle")),
     };
+
+    let class_name = to_wstring("my_window");
+
     let wnd = WNDCLASSW {
         lpfnWndProc: Some(window_proc),
         lpszClassName: PCWSTR::from_raw(class_name.as_ptr()),
@@ -95,6 +101,7 @@ pub(crate) unsafe fn init_window() -> Result<WindowInfo, TIError> {
     if RegisterClassW(&wnd) == 0 {
         return Err(get_win_os_error("Error creating window class"));
     }
+
     let hwnd = CreateWindowExW(
         WINDOW_EX_STYLE(0),
         PCWSTR::from_raw(class_name.as_ptr()),
@@ -112,6 +119,7 @@ pub(crate) unsafe fn init_window() -> Result<WindowInfo, TIError> {
     if hwnd.0 == 0 {
         return Err(get_win_os_error("Error creating window"));
     }
+
     let nid = NOTIFYICONDATAW {
         cbSize: mem::size_of::<NOTIFYICONDATAW>() as u32,
         hWnd: hwnd,
@@ -123,16 +131,17 @@ pub(crate) unsafe fn init_window() -> Result<WindowInfo, TIError> {
     if !Shell_NotifyIconW(NIM_ADD, &nid).as_bool() {
         return Err(get_win_os_error("Error adding menu icon"));
     }
+
     // Setup menu
-    let hmenu = match CreatePopupMenu() {
-        Ok(hmenu) => hmenu,
-        Err(_) => return Err(get_win_os_error("Error creating popup menu")),
-    };
     let info = MENUINFO {
         cbSize: mem::size_of::<MENUINFO>() as u32,
         fMask: MIM_APPLYTOSUBMENUS | MIM_STYLE,
         dwStyle: MNS_NOTIFYBYPOS,
         ..Default::default()
+    };
+    let hmenu = match CreatePopupMenu() {
+        Ok(hmenu) => hmenu,
+        Err(_) => return Err(get_win_os_error("Error creating popup menu")),
     };
     if !SetMenuInfo(hmenu, &info).as_bool() {
         return Err(get_win_os_error("Error setting up menu"));
