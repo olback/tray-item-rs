@@ -55,8 +55,8 @@ pub(crate) unsafe extern "system" fn window_proc(
 
     if msg == WM_USER + 1 && (l_param.0 as u32 == WM_LBUTTONUP || l_param.0 as u32 == WM_RBUTTONUP)
     {
-        let mut p = POINT { x: 0, y: 0 };
-        if !GetCursorPos(&mut p).as_bool() {
+        let mut point = POINT { x: 0, y: 0 };
+        if !GetCursorPos(&mut point).as_bool() {
             return LRESULT(1);
         }
         SetForegroundWindow(h_wnd);
@@ -67,8 +67,8 @@ pub(crate) unsafe extern "system" fn window_proc(
                 TrackPopupMenu(
                     stash.info.hmenu,
                     TPM_LEFTBUTTON | TPM_BOTTOMALIGN | TPM_LEFTALIGN,
-                    p.x,
-                    p.y,
+                    point.x,
+                    point.y,
                     0,
                     h_wnd,
                     None,
@@ -126,13 +126,13 @@ pub(crate) unsafe fn init_window() -> Result<WindowInfo, TIError> {
     }
     // Setup menu
     let hmenu = CreatePopupMenu().unwrap(); // FG
-    let m = MENUINFO {
+    let info = MENUINFO {
         cbSize: mem::size_of::<MENUINFO>() as _,
         fMask: MIM_APPLYTOSUBMENUS | MIM_STYLE,
         dwStyle: MNS_NOTIFYBYPOS,
         ..Default::default()
     };
-    if !SetMenuInfo(hmenu, &m).as_bool() {
+    if !SetMenuInfo(hmenu, &info).as_bool() {
         return Err(get_win_os_error("Error setting up menu"));
     }
 
