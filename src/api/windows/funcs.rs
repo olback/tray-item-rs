@@ -56,7 +56,7 @@ pub(crate) unsafe extern "system" fn window_proc(
     if msg == WM_USER + 1 && (l_param.0 as u32 == WM_LBUTTONUP || l_param.0 as u32 == WM_RBUTTONUP)
     {
         let mut p = POINT { x: 0, y: 0 };
-        if !GetCursorPos(&mut p as *mut POINT).as_bool() {
+        if !GetCursorPos(&mut p).as_bool() {
             return LRESULT(1);
         }
         SetForegroundWindow(h_wnd);
@@ -113,7 +113,7 @@ pub(crate) unsafe fn init_window() -> Result<WindowInfo, TIError> {
     if hwnd.0 == 0 {
         return Err(get_win_os_error("Error creating window"));
     }
-    let mut nid = NOTIFYICONDATAW {
+    let nid = NOTIFYICONDATAW {
         cbSize: mem::size_of::<NOTIFYICONDATAW>() as _,
         hWnd: hwnd,
         uID: 1,
@@ -121,7 +121,7 @@ pub(crate) unsafe fn init_window() -> Result<WindowInfo, TIError> {
         uCallbackMessage: WM_USER + 1,
         ..Default::default()
     };
-    if !Shell_NotifyIconW(NIM_ADD, &mut nid as *mut NOTIFYICONDATAW).as_bool() {
+    if !Shell_NotifyIconW(NIM_ADD, &nid).as_bool() {
         return Err(get_win_os_error("Error adding menu icon"));
     }
     // Setup menu
