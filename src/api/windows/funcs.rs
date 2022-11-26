@@ -3,7 +3,7 @@ use std::{ffi::OsStr, mem, os::windows::ffi::OsStrExt};
 use windows::Win32::{
     Foundation::{GetLastError, HINSTANCE, HWND, LRESULT, POINT},
     Graphics::Gdi::HBRUSH,
-    System::LibraryLoader::GetModuleHandleA,
+    System::LibraryLoader::GetModuleHandleW,
     UI::{
         Shell::{NIF_MESSAGE, NIM_ADD},
         WindowsAndMessaging::{
@@ -84,7 +84,7 @@ pub(crate) unsafe extern "system" fn window_proc(
 
 pub(crate) unsafe fn init_window() -> Result<WindowInfo, TIError> {
     let class_name = to_wstring("my_window");
-    let hinstance = GetModuleHandleA(None).unwrap(); // FG
+    let hinstance = GetModuleHandleW(None).unwrap(); // FG
     let wnd = WNDCLASSW {
         lpfnWndProc: Some(window_proc),
         hIcon: LoadIconW(HINSTANCE::default(), IDI_APPLICATION).unwrap(), // FG
