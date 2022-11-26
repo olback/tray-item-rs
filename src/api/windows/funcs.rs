@@ -1,18 +1,17 @@
 use std::{ffi::OsStr, mem, os::windows::ffi::OsStrExt};
 
 use windows::Win32::{
-    Foundation::{GetLastError, HINSTANCE, HWND, LRESULT, POINT},
-    Graphics::Gdi::HBRUSH,
+    Foundation::{GetLastError, HWND, LRESULT, POINT},
     System::LibraryLoader::GetModuleHandleW,
     UI::{
         Shell::{NIF_MESSAGE, NIM_ADD},
         WindowsAndMessaging::{
             CreatePopupMenu, CreateWindowExW, DefWindowProcW, DispatchMessageW, GetCursorPos,
-            GetMenuItemID, GetMessageW, LoadCursorW, LoadIconW, PostQuitMessage, RegisterClassW,
-            SetForegroundWindow, SetMenuInfo, TrackPopupMenu, TranslateMessage, CW_USEDEFAULT,
-            IDI_APPLICATION, MENUINFO, MIM_APPLYTOSUBMENUS, MIM_STYLE, MNS_NOTIFYBYPOS, MSG,
-            TPM_BOTTOMALIGN, TPM_LEFTALIGN, TPM_LEFTBUTTON, WINDOW_EX_STYLE, WM_LBUTTONUP,
-            WM_MENUCOMMAND, WM_QUIT, WM_RBUTTONUP, WM_USER, WNDCLASSW, WS_OVERLAPPEDWINDOW,
+            GetMenuItemID, GetMessageW, PostQuitMessage, RegisterClassW, SetForegroundWindow,
+            SetMenuInfo, TrackPopupMenu, TranslateMessage, CW_USEDEFAULT, MENUINFO,
+            MIM_APPLYTOSUBMENUS, MIM_STYLE, MNS_NOTIFYBYPOS, MSG, TPM_BOTTOMALIGN, TPM_LEFTALIGN,
+            TPM_LEFTBUTTON, WINDOW_EX_STYLE, WM_LBUTTONUP, WM_MENUCOMMAND, WM_QUIT, WM_RBUTTONUP,
+            WM_USER, WNDCLASSW, WS_OVERLAPPEDWINDOW,
         },
     },
 };
@@ -84,12 +83,12 @@ pub(crate) unsafe extern "system" fn window_proc(
 
 pub(crate) unsafe fn init_window() -> Result<WindowInfo, TIError> {
     let class_name = to_wstring("my_window");
-    let hinstance = GetModuleHandleW(None).unwrap(); // FG
+    let hinstance = match GetModuleHandleW(None) {
+        Ok(hinstance) => hinstance,
+        Err(_) => return Err(get_win_os_error("Error getting module handle")),
+    };
     let wnd = WNDCLASSW {
         lpfnWndProc: Some(window_proc),
-        hIcon: LoadIconW(HINSTANCE::default(), IDI_APPLICATION).unwrap(), // FG
-        hCursor: LoadCursorW(HINSTANCE::default(), IDI_APPLICATION).unwrap(), // FG
-        hbrBackground: HBRUSH(16),
         lpszClassName: PCWSTR::from_raw(class_name.as_ptr()),
         ..Default::default()
     };
@@ -125,7 +124,10 @@ pub(crate) unsafe fn init_window() -> Result<WindowInfo, TIError> {
         return Err(get_win_os_error("Error adding menu icon"));
     }
     // Setup menu
-    let hmenu = CreatePopupMenu().unwrap(); // FG
+    let hmenu = match CreatePopupMenu() {
+        Ok(hmenu) => hmenu,
+        Err(_) => return Err(get_win_os_error("Error creating popup menu")),
+    };
     let info = MENUINFO {
         cbSize: mem::size_of::<MENUINFO>() as u32,
         fMask: MIM_APPLYTOSUBMENUS | MIM_STYLE,
