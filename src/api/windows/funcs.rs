@@ -45,7 +45,7 @@ pub(crate) unsafe extern "system" fn window_proc(
             let stash = stash.borrow();
             let stash = stash.as_ref();
             if let Some(stash) = stash {
-                let menu_id = GetMenuItemID(stash.info.hmenu, w_param.0 as _) as i32;
+                let menu_id = GetMenuItemID(stash.info.hmenu, w_param.0 as i32) as i32;
                 if menu_id != -1 {
                     stash.tx.send(WindowsTrayEvent(menu_id as u32)).ok();
                 }
@@ -114,7 +114,7 @@ pub(crate) unsafe fn init_window() -> Result<WindowInfo, TIError> {
         return Err(get_win_os_error("Error creating window"));
     }
     let nid = NOTIFYICONDATAW {
-        cbSize: mem::size_of::<NOTIFYICONDATAW>() as _,
+        cbSize: mem::size_of::<NOTIFYICONDATAW>() as u32,
         hWnd: hwnd,
         uID: 1,
         uFlags: NIF_MESSAGE,
@@ -127,7 +127,7 @@ pub(crate) unsafe fn init_window() -> Result<WindowInfo, TIError> {
     // Setup menu
     let hmenu = CreatePopupMenu().unwrap(); // FG
     let info = MENUINFO {
-        cbSize: mem::size_of::<MENUINFO>() as _,
+        cbSize: mem::size_of::<MENUINFO>() as u32,
         fMask: MIM_APPLYTOSUBMENUS | MIM_STYLE,
         dwStyle: MNS_NOTIFYBYPOS,
         ..Default::default()

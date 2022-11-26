@@ -126,7 +126,7 @@ impl TrayItemWindows {
 
         let mut st = to_wstring(label);
         let item = MENUITEMINFOW {
-            cbSize: mem::size_of::<MENUITEMINFOW>() as _,
+            cbSize: mem::size_of::<MENUITEMINFOW>() as u32,
             fMask: MIIM_FTYPE | MIIM_STRING | MIIM_ID | MIIM_STATE,
             fType: MFT_STRING,
             fState: MFS_DISABLED | MFS_UNHILITE,
@@ -155,7 +155,7 @@ impl TrayItemWindows {
 
         let mut st = to_wstring(label);
         let item = MENUITEMINFOW {
-            cbSize: mem::size_of::<MENUITEMINFOW>() as _,
+            cbSize: mem::size_of::<MENUITEMINFOW>() as u32,
             fMask: MIIM_FTYPE | MIIM_STRING | MIIM_ID | MIIM_STATE,
             fType: MFT_STRING,
             wID: item_idx,
@@ -178,7 +178,7 @@ impl TrayItemWindows {
             len
         }) as u32;
         let item = MENUITEMINFOW {
-            cbSize: mem::size_of::<MENUITEMINFOW>() as _,
+            cbSize: mem::size_of::<MENUITEMINFOW>() as u32,
             fMask: MIIM_FTYPE | MIIM_ID | MIIM_STATE,
             fType: MFT_SEPARATOR,
             wID: item_idx,
@@ -199,7 +199,7 @@ impl TrayItemWindows {
         // Gross way to convert String to [i8; 128]
         // TODO: Clean up conversion, test for length so we don't panic at runtime
         let mut nid = NOTIFYICONDATAW {
-            cbSize: mem::size_of::<NOTIFYICONDATAW>() as _,
+            cbSize: mem::size_of::<NOTIFYICONDATAW>() as u32,
             hWnd: self.info.hwnd,
             uID: 1,
             uFlags: NIF_TIP,
@@ -236,7 +236,7 @@ impl TrayItemWindows {
     fn _set_icon(&self, icon: HICON) -> Result<(), TIError> {
         unsafe {
             let nid = NOTIFYICONDATAW {
-                cbSize: mem::size_of::<NOTIFYICONDATAW>() as _,
+                cbSize: mem::size_of::<NOTIFYICONDATAW>() as u32,
                 hWnd: self.info.hwnd,
                 uID: 1,
                 uFlags: NIF_ICON,
@@ -266,7 +266,7 @@ impl TrayItemWindows {
     pub fn shutdown(&self) -> Result<(), TIError> {
         unsafe {
             let nid = NOTIFYICONDATAW {
-                cbSize: mem::size_of::<NOTIFYICONDATAW>() as _,
+                cbSize: mem::size_of::<NOTIFYICONDATAW>() as u32,
                 hWnd: self.info.hwnd,
                 uID: 1,
                 uFlags: NIF_ICON,
