@@ -195,9 +195,14 @@ impl TrayItemWindows {
     // others
 
     fn set_tooltip(&self, tooltip: &str) -> Result<(), TIError> {
+        let wide_tooltip = to_wstring(tooltip);
+
+        // Ensure the tooltip is not too long
+        if wide_tooltip.len() > 128 {
+            return Err(TIError::new("The tooltip may not exceed 127 wide bytes"));
+        }
+
         // Add Tooltip
-        // Gross way to convert String to [i8; 128]
-        // TODO: Clean up conversion, test for length so we don't panic at runtime
         let mut nid = NOTIFYICONDATAW {
             cbSize: mem::size_of::<NOTIFYICONDATAW>() as u32,
             hWnd: self.info.hwnd,
@@ -205,7 +210,7 @@ impl TrayItemWindows {
             uFlags: NIF_TIP,
             ..Default::default()
         };
-        for (index, character) in to_wstring(tooltip).into_iter().enumerate() {
+        for (index, character) in wide_tooltip.into_iter().enumerate() {
             nid.szTip[index] = character;
         }
         unsafe {
