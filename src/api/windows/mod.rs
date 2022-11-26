@@ -1,39 +1,42 @@
 // Most of this code is taken from https://github.com/qdot/systray-rs/blob/master/src/api/win32/mod.rs
 
-use {
-    crate::TIError,
-    std::{
-        self,
-        cell::RefCell,
-        sync::{
-            mpsc::{channel, Sender},
-            Arc, Mutex,
-        },
-        thread,
+mod funcs;
+mod structs;
+
+use std::{
+    cell::RefCell,
+    mem,
+    sync::{
+        mpsc::{channel, Sender},
+        Arc, Mutex,
     },
-    winapi::{
-        shared::{
-            minwindef::{LPARAM, WPARAM},
-            windef::HICON,
-        },
-        um::{
-            shellapi::{self, NIF_ICON, NIF_TIP, NIM_DELETE, NIM_MODIFY, NOTIFYICONDATAW},
-            winuser::{
-                self, IMAGE_ICON, MENUITEMINFOW, MFS_DISABLED, MFS_UNHILITE, MFT_SEPARATOR,
-                MFT_STRING, MIIM_FTYPE, MIIM_ID, MIIM_STATE, MIIM_STRING, WM_DESTROY,
+    thread,
+};
+
+use windows::{
+    core::{PCWSTR, PWSTR},
+    Win32::{
+        Foundation::{LPARAM, WPARAM},
+        UI::{
+            Shell::{
+                Shell_NotifyIconW, NIF_ICON, NIF_TIP, NIM_DELETE, NIM_MODIFY, NOTIFYICONDATAW,
+            },
+            WindowsAndMessaging::{
+                InsertMenuItemW, LoadImageW, PostMessageW, HICON, IMAGE_ICON, LR_DEFAULTCOLOR,
+                MENUITEMINFOW, MFS_DISABLED, MFS_UNHILITE, MFT_SEPARATOR, MFT_STRING, MIIM_FTYPE,
+                MIIM_ID, MIIM_STATE, MIIM_STRING, WM_DESTROY,
             },
         },
     },
 };
 
-mod funcs;
-mod structs;
+use crate::TIError;
 use funcs::*;
 use structs::*;
 
 thread_local!(static WININFO_STASH: RefCell<Option<WindowsLoopData>> = RefCell::new(None));
 
-type CallBackEntry = Option<Box<dyn Fn() -> () + Send + 'static>>;
+type CallBackEntry = Option<Box<dyn Fn() + Send + 'static>>;
 
 pub struct TrayItemWindows {
     entries: Arc<Mutex<Vec<CallBackEntry>>>,
@@ -51,44 +54,37 @@ impl TrayItemWindows {
 
         let entries_clone = Arc::clone(&entries);
         let event_loop = thread::spawn(move || loop {
-            match event_rx.recv() {
-                Ok(v) => {
-                    if v.0 == u32::MAX {
-                        break;
-                    }
-
-                    padlock::mutex_lock(&entries_clone, |ents: &mut Vec<CallBackEntry>| match &ents
-                        [v.0 as usize]
-                    {
-                        Some(f) => f(),
-                        None => (),
-                    })
+            if let Ok(v) = event_rx.recv() {
+                if v.0 == u32::MAX {
+                    break;
                 }
 
-                Err(_) => (),
+                padlock::mutex_lock(&entries_clone, |ents: &mut Vec<CallBackEntry>| match &ents
+                    [v.0 as usize]
+                {
+                    Some(f) => f(),
+                    None => (),
+                })
             }
         });
 
         let event_tx_clone = event_tx.clone();
         let windows_loop = thread::spawn(move || unsafe {
-            let i = init_window();
-            let k;
-
-            match i {
-                Ok(j) => {
-                    tx.send(Ok(j.clone())).ok();
-                    k = j;
+            let info = match init_window() {
+                Ok(info) => {
+                    tx.send(Ok(info.clone())).ok();
+                    info
                 }
 
                 Err(e) => {
                     tx.send(Err(e)).ok();
                     return;
                 }
-            }
+            };
 
             WININFO_STASH.with(|stash| {
                 let data = WindowsLoopData {
-                    info: k,
+                    info,
                     tx: event_tx_clone,
                 };
 
@@ -104,11 +100,11 @@ impl TrayItemWindows {
         };
 
         let w = Self {
-            entries: entries,
-            info: info,
+            entries,
+            info,
             windows_loop: Some(windows_loop),
             event_loop: Some(event_loop),
-            event_tx: event_tx,
+            event_tx,
         };
 
         w.set_tooltip(title)?;
@@ -129,17 +125,18 @@ impl TrayItemWindows {
         }) as u32;
 
         let mut st = to_wstring(label);
-        let mut item = get_menu_item_struct();
-        item.fMask = MIIM_FTYPE | MIIM_STRING | MIIM_ID | MIIM_STATE;
-        item.fType = MFT_STRING;
-        item.fState = MFS_DISABLED | MFS_UNHILITE;
-        item.wID = item_idx;
-        item.dwTypeData = st.as_mut_ptr();
-        item.cch = (label.len() * 2) as u32;
+        let item = MENUITEMINFOW {
+            cbSize: mem::size_of::<MENUITEMINFOW>() as _,
+            fMask: MIIM_FTYPE | MIIM_STRING | MIIM_ID | MIIM_STATE,
+            fType: MFT_STRING,
+            fState: MFS_DISABLED | MFS_UNHILITE,
+            wID: item_idx,
+            dwTypeData: PWSTR::from_raw(st.as_mut_ptr()),
+            cch: (label.len() * 2) as u32,
+            ..Default::default()
+        };
         unsafe {
-            if winuser::InsertMenuItemW(self.info.hmenu, item_idx, 1, &item as *const MENUITEMINFOW)
-                == 0
-            {
+            if !InsertMenuItemW(self.info.hmenu, item_idx, true, &item).as_bool() {
                 return Err(get_win_os_error("Error inserting menu item"));
             }
         }
@@ -148,7 +145,7 @@ impl TrayItemWindows {
 
     pub fn add_menu_item<F>(&mut self, label: &str, cb: F) -> Result<(), TIError>
     where
-        F: Fn() -> () + Send + 'static,
+        F: Fn() + Send + 'static,
     {
         let item_idx = padlock::mutex_lock(&self.entries, |entries| {
             let len = entries.len();
@@ -157,16 +154,17 @@ impl TrayItemWindows {
         }) as u32;
 
         let mut st = to_wstring(label);
-        let mut item = get_menu_item_struct();
-        item.fMask = MIIM_FTYPE | MIIM_STRING | MIIM_ID | MIIM_STATE;
-        item.fType = MFT_STRING;
-        item.wID = item_idx;
-        item.dwTypeData = st.as_mut_ptr();
-        item.cch = (label.len() * 2) as u32;
+        let item = MENUITEMINFOW {
+            cbSize: mem::size_of::<MENUITEMINFOW>() as _,
+            fMask: MIIM_FTYPE | MIIM_STRING | MIIM_ID | MIIM_STATE,
+            fType: MFT_STRING,
+            wID: item_idx,
+            dwTypeData: PWSTR::from_raw(st.as_mut_ptr()),
+            cch: (label.len() * 2) as u32,
+            ..Default::default()
+        };
         unsafe {
-            if winuser::InsertMenuItemW(self.info.hmenu, item_idx, 1, &item as *const MENUITEMINFOW)
-                == 0
-            {
+            if !InsertMenuItemW(self.info.hmenu, item_idx, true, &item).as_bool() {
                 return Err(get_win_os_error("Error inserting menu item"));
             }
         }
@@ -179,14 +177,15 @@ impl TrayItemWindows {
             entries.push(None);
             len
         }) as u32;
-        let mut item = get_menu_item_struct();
-        item.fMask = MIIM_FTYPE | MIIM_ID | MIIM_STATE;
-        item.fType = MFT_SEPARATOR;
-        item.wID = item_idx;
+        let item = MENUITEMINFOW {
+            cbSize: mem::size_of::<MENUITEMINFOW>() as _,
+            fMask: MIIM_FTYPE | MIIM_ID | MIIM_STATE,
+            fType: MFT_SEPARATOR,
+            wID: item_idx,
+            ..Default::default()
+        };
         unsafe {
-            if winuser::InsertMenuItemW(self.info.hmenu, item_idx, 1, &item as *const MENUITEMINFOW)
-                == 0
-            {
+            if !InsertMenuItemW(self.info.hmenu, item_idx, true, &item).as_bool() {
                 return Err(get_win_os_error("Error inserting menu separator"));
             }
         }
@@ -199,14 +198,18 @@ impl TrayItemWindows {
         // Add Tooltip
         // Gross way to convert String to [i8; 128]
         // TODO: Clean up conversion, test for length so we don't panic at runtime
-        let tt = tooltip.as_bytes().clone();
-        let mut nid = get_nid_struct(&self.info.hwnd);
-        for i in 0..tt.len() {
-            nid.szTip[i] = tt[i] as u16;
+        let mut nid = NOTIFYICONDATAW {
+            cbSize: mem::size_of::<NOTIFYICONDATAW>() as _,
+            hWnd: self.info.hwnd,
+            uID: 1,
+            uFlags: NIF_TIP,
+            ..Default::default()
+        };
+        for (index, character) in to_wstring(tooltip).into_iter().enumerate() {
+            nid.szTip[index] = character;
         }
-        nid.uFlags = NIF_TIP;
         unsafe {
-            if shellapi::Shell_NotifyIconW(NIM_MODIFY, &mut nid as *mut NOTIFYICONDATAW) == 0 {
+            if !Shell_NotifyIconW(NIM_MODIFY, &nid).as_bool() {
                 return Err(get_win_os_error("Error setting tooltip"));
             }
         }
@@ -214,29 +217,33 @@ impl TrayItemWindows {
     }
 
     fn set_icon_from_resource(&self, resource_name: &str) -> Result<(), TIError> {
-        let icon;
-        unsafe {
-            icon = winuser::LoadImageW(
+        let icon = unsafe {
+            match LoadImageW(
                 self.info.hinstance,
-                to_wstring(&resource_name).as_ptr(),
+                PCWSTR::from_raw(to_wstring(resource_name).as_ptr()),
                 IMAGE_ICON,
                 64,
                 64,
-                0,
-            ) as HICON;
-            if icon == std::ptr::null_mut() as HICON {
-                return Err(get_win_os_error("Error setting icon from resource"));
+                LR_DEFAULTCOLOR,
+            ) {
+                Ok(handle) => HICON(handle.0),
+                Err(_) => return Err(get_win_os_error("Error setting icon from resource")),
             }
-        }
+        };
         self._set_icon(icon)
     }
 
     fn _set_icon(&self, icon: HICON) -> Result<(), TIError> {
         unsafe {
-            let mut nid = get_nid_struct(&self.info.hwnd);
-            nid.uFlags = NIF_ICON;
-            nid.hIcon = icon;
-            if shellapi::Shell_NotifyIconW(NIM_MODIFY, &mut nid as *mut NOTIFYICONDATAW) == 0 {
+            let nid = NOTIFYICONDATAW {
+                cbSize: mem::size_of::<NOTIFYICONDATAW>() as _,
+                hWnd: self.info.hwnd,
+                uID: 1,
+                uFlags: NIF_ICON,
+                hIcon: icon,
+                ..Default::default()
+            };
+            if !Shell_NotifyIconW(NIM_MODIFY, &nid).as_bool() {
                 return Err(get_win_os_error("Error setting icon"));
             }
         }
@@ -245,7 +252,7 @@ impl TrayItemWindows {
 
     pub fn quit(&mut self) {
         unsafe {
-            winuser::PostMessageW(self.info.hwnd, WM_DESTROY, 0 as WPARAM, 0 as LPARAM);
+            PostMessageW(self.info.hwnd, WM_DESTROY, WPARAM(0), LPARAM(0));
         }
         if let Some(t) = self.windows_loop.take() {
             t.join().ok();
@@ -258,9 +265,14 @@ impl TrayItemWindows {
 
     pub fn shutdown(&self) -> Result<(), TIError> {
         unsafe {
-            let mut nid = get_nid_struct(&self.info.hwnd);
-            nid.uFlags = NIF_ICON;
-            if shellapi::Shell_NotifyIconW(NIM_DELETE, &mut nid as *mut NOTIFYICONDATAW) == 0 {
+            let nid = NOTIFYICONDATAW {
+                cbSize: mem::size_of::<NOTIFYICONDATAW>() as _,
+                hWnd: self.info.hwnd,
+                uID: 1,
+                uFlags: NIF_ICON,
+                ..Default::default()
+            };
+            if !Shell_NotifyIconW(NIM_DELETE, &nid).as_bool() {
                 return Err(get_win_os_error("Error deleting icon from menu"));
             }
         }

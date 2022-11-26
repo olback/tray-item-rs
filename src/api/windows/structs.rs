@@ -1,9 +1,8 @@
-use {
-    std::sync::mpsc::Sender,
-    winapi::shared::{
-        minwindef::HINSTANCE,
-        windef::{HMENU, HWND},
-    },
+use std::sync::mpsc::Sender;
+
+use windows::Win32::{
+    Foundation::{HINSTANCE, HWND},
+    UI::WindowsAndMessaging::HMENU,
 };
 
 #[derive(Clone)]
