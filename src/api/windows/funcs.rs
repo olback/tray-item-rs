@@ -1,6 +1,6 @@
-use std::{ffi::OsStr, mem, os::windows::ffi::OsStrExt};
+use std::{ffi::OsStr, mem, os::windows::ffi::OsStrExt, ptr};
 
-use windows::Win32::{
+use windows_sys::Win32::{
     Foundation::{GetLastError, HWND, LRESULT, POINT},
     System::LibraryLoader::GetModuleHandleW,
     UI::{
@@ -10,8 +10,8 @@ use windows::Win32::{
             GetMenuItemID, GetMessageW, PostQuitMessage, RegisterClassW, SetForegroundWindow,
             SetMenuInfo, TrackPopupMenu, TranslateMessage, CW_USEDEFAULT, MENUINFO,
             MIM_APPLYTOSUBMENUS, MIM_STYLE, MNS_NOTIFYBYPOS, MSG, TPM_BOTTOMALIGN, TPM_LEFTALIGN,
-            TPM_LEFTBUTTON, WINDOW_EX_STYLE, WM_LBUTTONUP, WM_MENUCOMMAND, WM_QUIT, WM_RBUTTONUP,
-            WM_USER, WNDCLASSW, WS_OVERLAPPEDWINDOW,
+            TPM_LEFTBUTTON, WM_LBUTTONUP, WM_MENUCOMMAND, WM_QUIT, WM_RBUTTONUP, WM_USER,
+            WNDCLASSW, WS_OVERLAPPEDWINDOW,
         },
     },
 };
@@ -27,7 +27,7 @@ pub(crate) fn to_wstring(str: &str) -> Vec<u16> {
 
 pub(crate) unsafe fn get_win_os_error(msg: &str) -> TIError {
     TIError::new_with_location(
-        format!("{}: {}", &msg, GetLastError().0),
+        format!("{}: {}", &msg, GetLastError()),
         std::file!(),
         std::line!(),
     )
@@ -44,7 +44,7 @@ pub(crate) unsafe extern "system" fn window_proc(
             let stash = stash.borrow();
             let stash = stash.as_ref();
             if let Some(stash) = stash {
-                let menu_id = GetMenuItemID(stash.info.hmenu, w_param.0 as i32) as i32;
+                let menu_id = GetMenuItemID(stash.info.hmenu, w_param as i32) as i32;
                 if menu_id != -1 {
                     stash.tx.send(WindowsTrayEvent(menu_id as u32)).ok();
                 }
@@ -52,11 +52,10 @@ pub(crate) unsafe extern "system" fn window_proc(
         });
     }
 
-    if msg == WM_USER + 1 && (l_param.0 as u32 == WM_LBUTTONUP || l_param.0 as u32 == WM_RBUTTONUP)
-    {
+    if msg == WM_USER + 1 && (l_param as u32 == WM_LBUTTONUP || l_param as u32 == WM_RBUTTONUP) {
         let mut point = POINT { x: 0, y: 0 };
-        if !GetCursorPos(&mut point).as_bool() {
-            return LRESULT(1);
+        if GetCursorPos(&mut point) == 0 {
+            return 1;
         }
 
         SetForegroundWindow(h_wnd);
@@ -72,7 +71,7 @@ pub(crate) unsafe extern "system" fn window_proc(
                     point.y,
                     0,
                     h_wnd,
-                    None,
+                    ptr::null(),
                 );
             }
         });
@@ -86,64 +85,58 @@ pub(crate) unsafe extern "system" fn window_proc(
 }
 
 pub(crate) unsafe fn init_window() -> Result<WindowInfo, TIError> {
-    let hinstance = match GetModuleHandleW(None) {
-        Ok(hinstance) => hinstance,
-        Err(_) => return Err(get_win_os_error("Error getting module handle")),
-    };
+    let hinstance = GetModuleHandleW(ptr::null());
+    if hinstance == 0 {
+        return Err(get_win_os_error("Error getting module handle"));
+    }
 
     let class_name = to_wstring("my_window");
 
-    let wnd = WNDCLASSW {
-        lpfnWndProc: Some(window_proc),
-        lpszClassName: PCWSTR::from_raw(class_name.as_ptr()),
-        ..Default::default()
-    };
+    let mut wnd = unsafe { mem::zeroed::<WNDCLASSW>() };
+    wnd.lpfnWndProc = Some(window_proc);
+    wnd.lpszClassName = class_name.as_ptr();
     if RegisterClassW(&wnd) == 0 {
         return Err(get_win_os_error("Error creating window class"));
     }
 
     let hwnd = CreateWindowExW(
-        WINDOW_EX_STYLE(0),
-        PCWSTR::from_raw(class_name.as_ptr()),
-        PCWSTR::from_raw(to_wstring("rust_systray_window").as_ptr()),
+        0,
+        class_name.as_ptr(),
+        to_wstring("rust_systray_window").as_ptr(),
         WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT,
         0,
         CW_USEDEFAULT,
         0,
-        None,
-        None,
-        None,
-        None,
+        0,
+        0,
+        0,
+        ptr::null(),
     );
-    if hwnd.0 == 0 {
+    if hwnd == 0 {
         return Err(get_win_os_error("Error creating window"));
     }
 
-    let nid = NOTIFYICONDATAW {
-        cbSize: mem::size_of::<NOTIFYICONDATAW>() as u32,
-        hWnd: hwnd,
-        uID: 1,
-        uFlags: NIF_MESSAGE,
-        uCallbackMessage: WM_USER + 1,
-        ..Default::default()
-    };
-    if !Shell_NotifyIconW(NIM_ADD, &nid).as_bool() {
+    let mut nid = unsafe { mem::zeroed::<NOTIFYICONDATAW>() };
+    nid.cbSize = mem::size_of::<NOTIFYICONDATAW>() as u32;
+    nid.hWnd = hwnd;
+    nid.uID = 1;
+    nid.uFlags = NIF_MESSAGE;
+    nid.uCallbackMessage = WM_USER + 1;
+    if Shell_NotifyIconW(NIM_ADD, &nid) == 0 {
         return Err(get_win_os_error("Error adding menu icon"));
     }
 
     // Setup menu
-    let info = MENUINFO {
-        cbSize: mem::size_of::<MENUINFO>() as u32,
-        fMask: MIM_APPLYTOSUBMENUS | MIM_STYLE,
-        dwStyle: MNS_NOTIFYBYPOS,
-        ..Default::default()
-    };
-    let hmenu = match CreatePopupMenu() {
-        Ok(hmenu) => hmenu,
-        Err(_) => return Err(get_win_os_error("Error creating popup menu")),
-    };
-    if !SetMenuInfo(hmenu, &info).as_bool() {
+    let mut info = unsafe { mem::zeroed::<MENUINFO>() };
+    info.cbSize = mem::size_of::<MENUINFO>() as u32;
+    info.fMask = MIM_APPLYTOSUBMENUS | MIM_STYLE;
+    info.dwStyle = MNS_NOTIFYBYPOS;
+    let hmenu = CreatePopupMenu();
+    if hmenu == 0 {
+        return Err(get_win_os_error("Error creating popup menu"));
+    }
+    if SetMenuInfo(hmenu, &info) == 0 {
         return Err(get_win_os_error("Error setting up menu"));
     }
 
@@ -156,9 +149,9 @@ pub(crate) unsafe fn init_window() -> Result<WindowInfo, TIError> {
 
 pub(crate) unsafe fn run_loop() {
     // Run message loop
-    let mut msg = MSG::default();
+    let mut msg = unsafe { mem::zeroed::<MSG>() };
     loop {
-        GetMessageW(&mut msg, None, 0, 0);
+        GetMessageW(&mut msg, 0, 0, 0);
         if msg.message == WM_QUIT {
             break;
         }

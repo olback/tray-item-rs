@@ -1,6 +1,6 @@
 use std::sync::mpsc::Sender;
 
-use windows::Win32::{
+use windows_sys::Win32::{
     Foundation::{HINSTANCE, HWND},
     UI::WindowsAndMessaging::HMENU,
 };

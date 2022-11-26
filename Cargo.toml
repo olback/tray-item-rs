@@ -20,8 +20,8 @@ gtk = "0.15"
 libc = "0.2"
 padlock = "0.2"
 
-[target.'cfg(target_os="windows")'.dependencies.windows]
-version = "0.43.0"
+[target.'cfg(target_os="windows")'.dependencies.windows-sys]
+version = "0.42.0"
 features = [
     "Win32_Foundation",
     "Win32_Graphics_Gdi",
