@@ -210,9 +210,7 @@ impl TrayItemWindows {
             uFlags: NIF_TIP,
             ..Default::default()
         };
-        for (index, character) in wide_tooltip.into_iter().enumerate() {
-            nid.szTip[index] = character;
-        }
+        nid.szTip[..wide_tooltip.len()].copy_from_slice(&wide_tooltip);
         unsafe {
             if !Shell_NotifyIconW(NIM_MODIFY, &nid).as_bool() {
                 return Err(get_win_os_error("Error setting tooltip"));

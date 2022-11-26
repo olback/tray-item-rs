@@ -14,6 +14,8 @@ fn main() {
     })
     .unwrap();
 
+    tray.inner_mut().add_separator().unwrap();
+
     let (tx, rx) = mpsc::channel();
 
     tray.add_menu_item("Quit", move || {
