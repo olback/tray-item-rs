@@ -21,7 +21,6 @@ libappindicator = { version = "0.7", optional = true } # Tray icon
 gtk = { version = "0.15", optional = true }
 
 [target.'cfg(target_os="windows")'.dependencies]
-libc = "0.2"
 padlock = "0.2"
 
 [target.'cfg(target_os="windows")'.dependencies.windows-sys]
