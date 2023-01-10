@@ -21,10 +21,18 @@ libappindicator = { version = "0.7", optional = true } # Tray icon
 gtk = { version = "0.15", optional = true }
 
 [target.'cfg(target_os="windows")'.dependencies]
-winapi = { version = "0.3", features = ["shellapi", "libloaderapi", "errhandlingapi", "impl-default"] }
 libc = "0.2"
 padlock = "0.2"
-# winrt = { git = "https://github.com/microsoft/winrt-rs" } # No crosss compilation available
+
+[target.'cfg(target_os="windows")'.dependencies.windows-sys]
+version = "0.42.0"
+features = [
+    "Win32_Foundation",
+    "Win32_Graphics_Gdi",
+    "Win32_System_LibraryLoader",
+    "Win32_UI_Shell",
+    "Win32_UI_WindowsAndMessaging"
+]
 
 [target.'cfg(target_os="macos")'.dependencies]
 cocoa = "0.24"

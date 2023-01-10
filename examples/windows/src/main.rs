@@ -16,7 +16,9 @@ fn main() {
     })
     .unwrap();
 
-    let (tx, rx) = mpsc::sync_channel::<Message>(2);
+    tray.inner_mut().add_separator().unwrap();
+
+    let (tx, rx) = mpsc::channel();
 
     let quit_tx = tx.clone();
     tray.add_menu_item("Quit", move || {
