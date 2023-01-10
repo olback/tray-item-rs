@@ -25,7 +25,11 @@ use windows_sys::Win32::{
     },
 };
 
-use crate::TIError;
+use crate::{
+    IconSource,
+    TIError
+};
+
 use funcs::*;
 use structs::*;
 
