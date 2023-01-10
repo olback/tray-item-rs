@@ -40,3 +40,11 @@ core-graphics = "0.22"
 objc-foundation = "0.1"
 objc_id = "0.1"
 libc = "0.2"
+
+[profile.release]
+strip = true
+opt-level = "z"
+lto = true
+incremental = false
+codegen-units = 1
+panic = "abort"
