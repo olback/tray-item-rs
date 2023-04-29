@@ -1,14 +1,14 @@
 use std::sync::mpsc::Sender;
 
 use windows_sys::Win32::{
-    Foundation::{HINSTANCE, HWND},
+    Foundation::{HMODULE, HWND},
     UI::WindowsAndMessaging::HMENU,
 };
 
 #[derive(Clone)]
 pub(crate) struct WindowInfo {
     pub hwnd: HWND,
-    pub hinstance: HINSTANCE,
+    pub hmodule: HMODULE,
     pub hmenu: HMENU,
 }
 

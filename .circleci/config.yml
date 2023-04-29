@@ -25,8 +25,12 @@ jobs:
                     cargo --version --verbose
 
       - run:
-          name: Run Check
+          name: Run Check (ksni)
           command: cargo check --verbose --features ksni
+
+      - run:
+          name: Run Check (libappindicator)
+          command: cargo check --verbose --features libappindicator
 
       - run:
           name: Run Check on examples/linux-embeded-icon

@@ -85,8 +85,8 @@ pub(crate) unsafe extern "system" fn window_proc(
 }
 
 pub(crate) unsafe fn init_window() -> Result<WindowInfo, TIError> {
-    let hinstance = GetModuleHandleW(ptr::null());
-    if hinstance == 0 {
+    let hmodule = GetModuleHandleW(ptr::null());
+    if hmodule == 0 {
         return Err(get_win_os_error("Error getting module handle"));
     }
 
@@ -143,7 +143,7 @@ pub(crate) unsafe fn init_window() -> Result<WindowInfo, TIError> {
     Ok(WindowInfo {
         hwnd,
         hmenu,
-        hinstance,
+        hmodule,
     })
 }
 
