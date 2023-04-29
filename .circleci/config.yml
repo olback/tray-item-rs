@@ -1,9 +1,9 @@
 version: 2
 
 jobs:
-  check:
+  linux:
     docker:
-      - image: olback/rust-gtk-linux
+      - image: olback/rust-linux-gtk
 
     steps:
       - checkout
@@ -26,7 +26,19 @@ jobs:
 
       - run:
           name: Run Check
-          command: cargo check --verbose 
+          command: cargo check --verbose
+
+      - run:
+          name: Run Check on examples/linux-embeded-icon
+          command: cd examples/linux-embeded-icon && cargo check --verbose
+
+      - run:
+          name: Run Check examples/linux-gresources
+          command: cd examples/linux-gresources && cargo check --verbose
+
+      - run:
+          name: Run Check on examples/linux-named-resource
+          command: cd examples/linux-named-resource && cargo check --verbose
 
       - save_cache:
           key: stable-cache-v1-{{ checksum "Cargo.toml" }}
@@ -40,5 +52,5 @@ workflows:
   version: 2
   check:
     jobs:
-      - check 
+      - check
 

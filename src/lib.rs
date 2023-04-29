@@ -11,18 +11,16 @@ pub enum IconSource {
     Data {
         height: i32,
         width: i32,
-        data: Vec<u8>
+        data: Vec<u8>,
     },
 }
 
 impl IconSource {
     pub fn as_str(&self) -> &str {
         match self {
-            IconSource::Resource(res) => {
-                res
-            },
+            IconSource::Resource(res) => res,
             #[allow(unreachable_patterns)]
-            _ => unimplemented!()
+            _ => unimplemented!(),
         }
     }
 }
@@ -42,7 +40,7 @@ impl TrayItem {
 
     pub fn add_menu_item<F>(&mut self, label: &str, cb: F) -> Result<(), TIError>
     where
-        F: Fn() + Send + 'static,
+        F: Fn() + Send + Sync + 'static,
     {
         self.0.add_menu_item(label, cb)
     }

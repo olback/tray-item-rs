@@ -9,8 +9,8 @@ build="build.rs"
 [dependencies]
 tray-item = { path="../../", features = [ "libappindicator" ] }
 gtk = "0.15"
-gio = "0.15.11"
-glib = "0.15.11"
+gio = "0.15"
+glib = "0.15"
 
 [build-dependencies]
-gio = "0.15.11"
+gio = "0.15"
