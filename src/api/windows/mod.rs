@@ -25,7 +25,11 @@ use windows_sys::Win32::{
     },
 };
 
-use crate::TIError;
+use crate::{
+    IconSource,
+    TIError
+};
+
 use funcs::*;
 use structs::*;
 
@@ -42,7 +46,8 @@ pub struct TrayItemWindows {
 }
 
 impl TrayItemWindows {
-    pub fn new(title: &str, icon: &str) -> Result<Self, TIError> {
+    pub fn new(title: &str, icon: IconSource) -> Result<Self, TIError> {
+
         let entries = Arc::new(Mutex::new(Vec::new()));
         let (event_tx, event_rx) = channel::<WindowsTrayEvent>();
 
@@ -109,8 +114,8 @@ impl TrayItemWindows {
         Ok(w)
     }
 
-    pub fn set_icon(&self, icon: &str) -> Result<(), TIError> {
-        self.set_icon_from_resource(icon)
+    pub fn set_icon(&self, icon: IconSource) -> Result<(), TIError> {
+        self.set_icon_from_resource(icon.as_str())
     }
 
     pub fn add_label(&mut self, label: &str) -> Result<(), TIError> {
