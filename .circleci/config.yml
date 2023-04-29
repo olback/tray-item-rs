@@ -26,7 +26,7 @@ jobs:
 
       - run:
           name: Run Check
-          command: cargo check --verbose
+          command: cargo check --verbose --features ksni
 
       - run:
           name: Run Check on examples/linux-embeded-icon
@@ -52,5 +52,5 @@ workflows:
   version: 2
   check:
     jobs:
-      - check
+      - linux
 
