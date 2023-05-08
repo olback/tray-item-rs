@@ -28,12 +28,6 @@ fn main() {
 
     let (tx, rx) = mpsc::channel();
 
-    let quit_tx = get_thread_sender(&tx);
-    tray.add_menu_item("Quit", move || {
-        quit_tx.lock().unwrap().send(Message::Quit).unwrap();
-    })
-    .unwrap();
-
     let red_tx = get_thread_sender(&tx);
     tray.add_menu_item("Red", move || {
         red_tx.lock().unwrap().send(Message::Red).unwrap();
@@ -43,6 +37,14 @@ fn main() {
     let green_tx = get_thread_sender(&tx);
     tray.add_menu_item("Green", move || {
         green_tx.lock().unwrap().send(Message::Green).unwrap();
+    })
+    .unwrap();
+
+    tray.inner_mut().add_separator().unwrap();
+
+    let quit_tx = get_thread_sender(&tx);
+    tray.add_menu_item("Quit", move || {
+        quit_tx.lock().unwrap().send(Message::Quit).unwrap();
     })
     .unwrap();
 
