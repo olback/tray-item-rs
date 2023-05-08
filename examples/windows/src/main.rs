@@ -28,27 +28,21 @@ fn main() {
 
     let (tx, rx) = mpsc::channel();
 
-    let quit_tx = tx.clone();
-    let sender = Arc::new(Mutex::new(quit_tx));
-    let thread_sender = sender.clone();
+    let quit_tx = get_thread_sender(&tx);
     tray.add_menu_item("Quit", move || {
-        thread_sender.lock().unwrap().send(Message::Quit).unwrap();
+        quit_tx.lock().unwrap().send(Message::Quit).unwrap();
     })
     .unwrap();
 
-    let red_tx = tx.clone();
-    let sender = Arc::new(Mutex::new(red_tx));
-    let thread_sender = sender.clone();
+    let red_tx = get_thread_sender(&tx);
     tray.add_menu_item("Red", move || {
-        thread_sender.lock().unwrap().send(Message::Red).unwrap();
+        red_tx.lock().unwrap().send(Message::Red).unwrap();
     })
     .unwrap();
 
-    let green_tx = tx.clone();
-    let sender = Arc::new(Mutex::new(green_tx));
-    let thread_sender = sender.clone();
+    let green_tx = get_thread_sender(&tx);
     tray.add_menu_item("Green", move || {
-        thread_sender.lock().unwrap().send(Message::Green).unwrap();
+        green_tx.lock().unwrap().send(Message::Green).unwrap();
     })
     .unwrap();
 
@@ -71,4 +65,11 @@ fn main() {
             _ => {}
         }
     }
+}
+
+fn get_thread_sender(sender: &mpsc::Sender<Message>) -> Arc<Mutex<mpsc::Sender<Message>>> {
+    let tx = sender.clone();
+    let sender = Arc::new(Mutex::new(tx));
+    let thread_sender = sender.clone();
+    thread_sender
 }
