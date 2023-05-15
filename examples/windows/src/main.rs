@@ -1,8 +1,5 @@
-use std::sync::{Arc, Mutex};
-use {
-    std::sync::mpsc,
-    tray_item::{IconSource, TrayItem},
-};
+use std::sync::mpsc;
+use tray_item::{IconSource, TrayItem};
 
 enum Message {
     Quit,
@@ -26,27 +23,25 @@ fn main() {
 
     tray.inner_mut().add_separator().unwrap();
 
-    let (tx, rx) = mpsc::channel();
+    let (tx, rx) = mpsc::sync_channel(1);
 
-    let arc_tx = Arc::new(Mutex::new(tx));
-
-    let red_tx = Arc::clone(&arc_tx);
+    let red_tx = tx.clone();
     tray.add_menu_item("Red", move || {
-        red_tx.lock().unwrap().send(Message::Red).unwrap();
+        red_tx.send(Message::Red).unwrap();
     })
     .unwrap();
 
-    let green_tx = Arc::clone(&arc_tx);
+    let green_tx = tx.clone();
     tray.add_menu_item("Green", move || {
-        green_tx.lock().unwrap().send(Message::Green).unwrap();
+        green_tx.send(Message::Green).unwrap();
     })
     .unwrap();
 
     tray.inner_mut().add_separator().unwrap();
 
-    let quit_tx = Arc::clone(&arc_tx);
+    let quit_tx = tx.clone();
     tray.add_menu_item("Quit", move || {
-        quit_tx.lock().unwrap().send(Message::Quit).unwrap();
+        quit_tx.send(Message::Quit).unwrap();
     })
     .unwrap();
 
