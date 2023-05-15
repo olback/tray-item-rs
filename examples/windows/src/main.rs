@@ -28,13 +28,15 @@ fn main() {
 
     let (tx, rx) = mpsc::channel();
 
-    let red_tx = get_thread_sender(&tx);
+    let arc_tx = Arc::new(Mutex::new(tx));
+
+    let red_tx = Arc::clone(&arc_tx);
     tray.add_menu_item("Red", move || {
         red_tx.lock().unwrap().send(Message::Red).unwrap();
     })
     .unwrap();
 
-    let green_tx = get_thread_sender(&tx);
+    let green_tx = Arc::clone(&arc_tx);
     tray.add_menu_item("Green", move || {
         green_tx.lock().unwrap().send(Message::Green).unwrap();
     })
@@ -42,7 +44,7 @@ fn main() {
 
     tray.inner_mut().add_separator().unwrap();
 
-    let quit_tx = get_thread_sender(&tx);
+    let quit_tx = Arc::clone(&arc_tx);
     tray.add_menu_item("Quit", move || {
         quit_tx.lock().unwrap().send(Message::Quit).unwrap();
     })
@@ -67,11 +69,4 @@ fn main() {
             _ => {}
         }
     }
-}
-
-fn get_thread_sender(sender: &mpsc::Sender<Message>) -> Arc<Mutex<mpsc::Sender<Message>>> {
-    let tx = sender.clone();
-    let sender = Arc::new(Mutex::new(tx));
-    let thread_sender = sender.clone();
-    thread_sender
 }
