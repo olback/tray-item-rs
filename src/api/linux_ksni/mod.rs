@@ -18,6 +18,10 @@ pub struct TrayItemLinux {
 }
 
 impl ksni::Tray for Tray {
+    fn id(&self) -> String {
+        self.title.clone()
+    }
+
     fn title(&self) -> String {
         self.title.clone()
     }
