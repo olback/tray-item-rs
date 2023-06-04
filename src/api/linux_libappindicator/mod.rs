@@ -52,4 +52,13 @@ impl TrayItemLinux {
 
         Ok(())
     }
+
+    pub fn add_separator(&mut self) -> Result<(), TIError> {
+        let item = gtk::SeparatorMenuItem::new();
+        self.menu.append(&item);
+        self.menu.show_all();
+        self.tray.set_menu(&mut self.menu);
+
+        Ok(())
+    }
 }
