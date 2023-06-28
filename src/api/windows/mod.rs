@@ -18,7 +18,7 @@ use windows_sys::Win32::{
     UI::{
         Shell::{Shell_NotifyIconW, NIF_ICON, NIF_TIP, NIM_DELETE, NIM_MODIFY, NOTIFYICONDATAW},
         WindowsAndMessaging::{
-            InsertMenuItemW, LoadImageW, PostMessageW, HICON, IMAGE_ICON, LR_DEFAULTCOLOR,
+            InsertMenuItemW, SetMenuItemInfoW, LoadImageW, PostMessageW, HICON, IMAGE_ICON, LR_DEFAULTCOLOR,
             MENUITEMINFOW, MFS_DISABLED, MFS_UNHILITE, MFT_SEPARATOR, MFT_STRING, MIIM_FTYPE,
             MIIM_ID, MIIM_STATE, MIIM_STRING, WM_DESTROY,
         },
@@ -115,6 +115,11 @@ impl TrayItemWindows {
     }
 
     pub fn add_label(&mut self, label: &str) -> Result<(), TIError> {
+        self.add_label_with_id(label)?;
+        Ok(())
+    }
+
+    pub fn add_label_with_id(&mut self, label: &str) -> Result<u32, TIError> {
         let item_idx = padlock::mutex_lock(&self.entries, |entries| {
             let len = entries.len();
             entries.push(None);
@@ -136,10 +141,38 @@ impl TrayItemWindows {
                 return Err(get_win_os_error("Error inserting menu item"));
             }
         }
+        Ok(item_idx)
+    }
+
+    pub fn set_label(&mut self, label: &str, id: u32) -> Result<(), TIError> {
+        let mut st = to_wstring(label);
+        let mut item = unsafe { mem::zeroed::<MENUITEMINFOW>() };
+        item.cbSize = mem::size_of::<MENUITEMINFOW>() as u32;
+        item.fMask = MIIM_FTYPE | MIIM_STRING | MIIM_ID | MIIM_STATE;
+        item.fType = MFT_STRING;
+        item.fState = MFS_DISABLED | MFS_UNHILITE;
+        item.wID = id;
+        item.dwTypeData = st.as_mut_ptr();
+        item.cch = (label.len() * 2) as u32;
+
+        unsafe {
+            if SetMenuItemInfoW(self.info.hmenu, id, 1, &item) == 0 {
+                return Err(get_win_os_error("Error inserting menu item"));
+            }
+        }
         Ok(())
+
     }
 
     pub fn add_menu_item<F>(&mut self, label: &str, cb: F) -> Result<(), TIError>
+    where
+        F: Fn() + Send + 'static,
+    {
+        self.add_menu_item_with_id(label, cb)?;
+        Ok(())
+    }
+
+    pub fn add_menu_item_with_id<F>(&mut self, label: &str, cb: F) -> Result<u32, TIError>
     where
         F: Fn() + Send + 'static,
     {
@@ -163,10 +196,33 @@ impl TrayItemWindows {
                 return Err(get_win_os_error("Error inserting menu item"));
             }
         }
+        Ok(item_idx)
+    }
+
+    pub fn set_menu_item_label(&mut self, label: &str, id: u32) -> Result<(), TIError> {
+        let mut st = to_wstring(label);
+        let mut item = unsafe { mem::zeroed::<MENUITEMINFOW>() };
+        item.cbSize = mem::size_of::<MENUITEMINFOW>() as u32;
+        item.fMask = MIIM_FTYPE | MIIM_STRING | MIIM_ID | MIIM_STATE;
+        item.fType = MFT_STRING;
+        item.wID = id;
+        item.dwTypeData = st.as_mut_ptr();
+        item.cch = (label.len() * 2) as u32;
+
+        unsafe {
+            if SetMenuItemInfoW(self.info.hmenu, id, 1, &item) == 0 {
+                return Err(get_win_os_error("Error setting menu item"));
+            }
+        }
         Ok(())
     }
 
     pub fn add_separator(&mut self) -> Result<(), TIError> {
+        self.add_separator_with_id()?;
+        Ok(())
+    }
+
+    pub fn add_separator_with_id(&mut self) -> Result<u32, TIError> {
         let item_idx = padlock::mutex_lock(&self.entries, |entries| {
             let len = entries.len();
             entries.push(None);
@@ -184,10 +240,10 @@ impl TrayItemWindows {
                 return Err(get_win_os_error("Error inserting menu separator"));
             }
         }
-        Ok(())
+        Ok(item_idx)
     }
 
-    fn set_tooltip(&self, tooltip: &str) -> Result<(), TIError> {
+    pub fn set_tooltip(&self, tooltip: &str) -> Result<(), TIError> {
         let wide_tooltip = to_wstring(tooltip);
         if wide_tooltip.len() > 128 {
             return Err(TIError::new("The tooltip may not exceed 127 wide bytes"));
