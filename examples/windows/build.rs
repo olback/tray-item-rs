@@ -1,5 +1,5 @@
-use windres::Build;
+extern crate embed_resource;
 
 fn main() {
-    Build::new().compile("tray-example.rc").unwrap();
+    embed_resource::compile("tray-example.rc", embed_resource::NONE);
 }

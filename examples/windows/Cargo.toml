@@ -9,4 +9,4 @@ edition = "2021"
 tray-item = { path = "../../" }
 
 [build-dependencies]
-windres = "*"
+embed-resource = "2.3"
