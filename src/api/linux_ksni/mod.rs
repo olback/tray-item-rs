@@ -2,9 +2,13 @@ use crate::{TIError, IconSource};
 use ksni::{menu::StandardItem, Handle, Icon};
 use std::sync::Arc;
 
-struct TrayItem {
-    label: String,
-    action: Option<Arc<dyn Fn() + Send + Sync + 'static>>
+enum TrayItem {
+    Label(String),
+    MenuItem {
+        label: String,
+        action: Arc<dyn Fn() + Send + Sync + 'static>
+    },
+    Separator
 }
 
 struct Tray {
@@ -47,25 +51,25 @@ impl ksni::Tray for Tray {
     }
 
     fn menu(&self) -> Vec<ksni::MenuItem<Self>> {
-        self.actions.iter().map(|item| {
-            let action = item.action.clone();
-            if let Some(action) = action {
+        self.actions.iter().map(|item| match item {
+            TrayItem::Label(label) => StandardItem {
+                label: label.clone(),
+                enabled: false,
+                ..Default::default()
+            }
+            .into(),
+            TrayItem::MenuItem { label, action } => {
+                let action = action.clone();
                 StandardItem {
-                    label: item.label.clone(),
+                    label: label.clone(),
                     activate: Box::new(move |_| {
                         action();
                     }),
                     ..Default::default()
                 }
                 .into()
-            } else {
-                StandardItem {
-                    label: item.label.clone(),
-                    enabled: false,
-                    ..Default::default()
-                }
-                .into()
             }
+            TrayItem::Separator => ksni::MenuItem::Separator,
         }).collect()
     }
 }
@@ -96,10 +100,7 @@ impl TrayItemLinux {
 
     pub fn add_label(&mut self, label: &str) -> Result<(), TIError> {
         self.tray.update(move |tray| {
-            tray.actions.push(TrayItem {
-                label: label.to_string(),
-                action: None
-            });
+            tray.actions.push(TrayItem::Label(label.to_string()));
         });
 
         Ok(())
@@ -114,11 +115,19 @@ impl TrayItemLinux {
         });
 
         self.tray.update(move |tray| {
-            tray.actions.push(TrayItem {
+            tray.actions.push(TrayItem::MenuItem {
                 label: label.to_string(),
-                action: Some(action.clone())
+                action: action.clone()
             });
         });
+        Ok(())
+    }
+
+    pub fn add_separator(&mut self) -> Result<(), TIError> {
+        self.tray.update(move |tray| {
+            tray.actions.push(TrayItem::Separator);
+        });
+
         Ok(())
     }
 }
