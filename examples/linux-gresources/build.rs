@@ -1,9 +1,7 @@
-extern crate gio;
-
 fn main() {
-	gio::compile_resources(
-		"../resources",
-		"../resources/tray-icon.xml",
-		"compiled.gresource",
-	);
+    glib_build_tools::compile_resources(
+        &["../resources"],
+        "../resources/tray-icon.xml",
+        "compiled.gresource",
+    );
 }

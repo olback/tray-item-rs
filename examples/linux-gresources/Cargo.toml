@@ -13,4 +13,4 @@ gio = "0.18"
 glib = "0.18"
 
 [build-dependencies]
-gio = "0.18"
+glib-build-tools = "0.18"
