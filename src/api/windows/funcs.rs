@@ -4,14 +4,15 @@ use windows_sys::Win32::{
     Foundation::{GetLastError, HWND, LRESULT, POINT},
     System::LibraryLoader::GetModuleHandleW,
     UI::{
-        Shell::{NIF_MESSAGE, NIM_ADD},
+        Shell::{NIF_MESSAGE, NIM_ADD, NIF_ICON},
         WindowsAndMessaging::{
             CreatePopupMenu, CreateWindowExW, DefWindowProcW, DispatchMessageW, GetCursorPos,
             GetMenuItemID, GetMessageW, PostQuitMessage, RegisterClassW, SetForegroundWindow,
             SetMenuInfo, TrackPopupMenu, TranslateMessage, CW_USEDEFAULT, MENUINFO,
             MIM_APPLYTOSUBMENUS, MIM_STYLE, MNS_NOTIFYBYPOS, MSG, TPM_BOTTOMALIGN, TPM_LEFTALIGN,
             TPM_LEFTBUTTON, WM_LBUTTONUP, WM_MENUCOMMAND, WM_QUIT, WM_RBUTTONUP, WM_USER,
-            WNDCLASSW, WS_OVERLAPPEDWINDOW,
+            WNDCLASSW, WS_OVERLAPPEDWINDOW, WM_CREATE, HICON, IDI_APPLICATION, LoadIconW, 
+            RegisterWindowMessageW,
         },
     },
 };
@@ -39,6 +40,8 @@ pub(crate) unsafe extern "system" fn window_proc(
     w_param: WPARAM,
     l_param: LPARAM,
 ) -> LRESULT {
+    static mut U_TASKBAR_RESTART: u32 = 0;
+
     if msg == WM_MENUCOMMAND {
         WININFO_STASH.with(|stash| {
             let stash = stash.borrow();
@@ -75,6 +78,38 @@ pub(crate) unsafe extern "system" fn window_proc(
                 );
             }
         });
+    }
+
+    if msg == WM_CREATE {
+        U_TASKBAR_RESTART = RegisterWindowMessageW(to_wstring("TaskbarCreated").as_ptr());
+    }
+
+    // If windows explorer restarts and we need to recreate the tray icon
+    if msg == U_TASKBAR_RESTART { 
+        let icon: HICON = unsafe {
+            let mut handle = LoadIconW(GetModuleHandleW(std::ptr::null()),
+                to_wstring("tray-default")
+                .as_ptr());
+            if handle == 0 {
+                handle = LoadIconW(0, IDI_APPLICATION);
+            }
+            if handle == 0 {
+                println!("Error setting icon from resource");
+                PostQuitMessage(0);
+            }
+            handle as HICON
+        };
+        let mut nid = unsafe { mem::zeroed::<NOTIFYICONDATAW>() };
+        nid.cbSize = mem::size_of::<NOTIFYICONDATAW>() as u32;
+        nid.hWnd = h_wnd;
+        nid.uID = 1;
+        nid.uFlags = NIF_MESSAGE | NIF_ICON;
+        nid.hIcon = icon;
+        nid.uCallbackMessage = WM_USER + 1;
+        if Shell_NotifyIconW(NIM_ADD, &nid) == 0 {
+            println!("Error adding menu icon");
+            PostQuitMessage(0);
+        }
     }
 
     if msg == WM_DESTROY {
@@ -116,12 +151,26 @@ pub(crate) unsafe fn init_window() -> Result<WindowInfo, TIError> {
     if hwnd == 0 {
         return Err(get_win_os_error("Error creating window"));
     }
+    
+    let icon: HICON = unsafe {
+        let mut handle = LoadIconW(GetModuleHandleW(std::ptr::null()), 
+            to_wstring("tray-default")
+            .as_ptr());
+        if handle == 0 {
+            handle = LoadIconW(0, IDI_APPLICATION);
+        }
+        if handle == 0 {
+            return Err(get_win_os_error("Error setting icon from resource"));
+        }
+        handle as HICON
+    };
 
     let mut nid = unsafe { mem::zeroed::<NOTIFYICONDATAW>() };
     nid.cbSize = mem::size_of::<NOTIFYICONDATAW>() as u32;
     nid.hWnd = hwnd;
     nid.uID = 1;
-    nid.uFlags = NIF_MESSAGE;
+    nid.uFlags = NIF_MESSAGE | NIF_ICON;
+    nid.hIcon = icon;
     nid.uCallbackMessage = WM_USER + 1;
     if Shell_NotifyIconW(NIM_ADD, &nid) == 0 {
         return Err(get_win_os_error("Error adding menu icon"));
