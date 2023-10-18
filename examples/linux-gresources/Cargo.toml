@@ -2,15 +2,15 @@
 name = "linux-gresource-example"
 version = "0.1.0"
 edition = "2021"
-build="build.rs"
+build = "build.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-tray-item = { path="../../", features = [ "libappindicator" ] }
-gtk = "0.15"
-gio = "0.15"
-glib = "0.15"
+tray-item = { path = "../../", features = ["libappindicator"] }
+gtk = "0.18"
+gio = "0.18"
+glib = "0.18"
 
 [build-dependencies]
-gio = "0.15"
+glib-build-tools = "0.18"

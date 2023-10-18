@@ -6,5 +6,5 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-tray-item = { path="../../", features = [ "ksni" ] }
-png = "0.16.8"
+tray-item = { path = "../../", features = ["ksni"] }
+png = "0.16"

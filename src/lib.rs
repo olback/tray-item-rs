@@ -40,7 +40,7 @@ impl TrayItem {
 
     pub fn add_menu_item<F>(&mut self, label: &str, cb: F) -> Result<(), TIError>
     where
-        F: Fn() + Send + 'static,
+        F: Fn() + Send + Sync + 'static,
     {
         self.0.add_menu_item(label, cb)
     }

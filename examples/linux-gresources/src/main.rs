@@ -56,23 +56,23 @@ fn main() {
         Ok(Message::Quit) => {
             gtk::main_quit();
             println!("Quit!");
-            glib::Continue(false)
+            glib::ControlFlow::Break
         }
         Ok(Message::Green) => {
             println!("Green!");
             tray.set_icon(IconSource::Resource("/another-name-from-rc-file"))
                 .unwrap();
-            glib::Continue(true)
+            glib::ControlFlow::Continue
         }
         Ok(Message::Red) => {
             println!("Red!");
             tray.set_icon(IconSource::Resource("/name-of-icon-in-rc-file"))
                 .unwrap();
-            glib::Continue(true)
+            glib::ControlFlow::Continue
         }
         _ => {
             println!("Default!");
-            glib::Continue(true)
+            glib::ControlFlow::Continue
         }
     });
 
