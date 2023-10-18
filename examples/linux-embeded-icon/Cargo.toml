@@ -7,4 +7,4 @@ edition = "2021"
 
 [dependencies]
 tray-item = { path = "../../", features = ["ksni"] }
-png = "0.17"
+png = "0.16"
