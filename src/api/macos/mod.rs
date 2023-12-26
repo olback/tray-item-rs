@@ -1,6 +1,11 @@
+use cocoa::{
+    base::id,
+    foundation::{NSData, NSSize},
+};
+
 use {
-    crate::TIError,
     crate::IconSource,
+    crate::TIError,
     callback::*,
     cocoa::{
         appkit::{
@@ -16,6 +21,42 @@ use {
 
 mod callback;
 
+fn get_icon_image(icon: IconSource) -> Option<id> {
+    unsafe {
+        match icon {
+            IconSource::Resource(_) => {
+                let icon = icon.as_str();
+                let icon = Some(icon).filter(|icon| !icon.is_empty());
+                icon.map(|icon_name| {
+                    let icon_name = NSString::alloc(nil).init_str(icon_name);
+                    NSImage::imageNamed_(NSImage::alloc(nil), icon_name)
+                })
+            }
+            IconSource::Data {
+                height,
+                width,
+                data,
+            } => {
+                let data = NSData::dataWithBytes_length_(
+                    nil,
+                    data.as_ptr() as *const std::os::raw::c_void,
+                    data.len() as u64,
+                );
+                let image = NSImage::initWithData_(NSImage::alloc(nil), data);
+                let new_size = if width != 0 && height != 0 {
+                    let icon_height: f64 = 18.0;
+                    let icon_width: f64 = (width as f64) / (height as f64 / icon_height);
+                    NSSize::new(icon_width, icon_height)
+                } else {
+                    NSSize::new(18.0, 18.0)
+                };
+                let _: () = msg_send![image, setSize: new_size];
+                Some(image)
+            }
+        }
+    }
+}
+
 pub struct TrayItemMacOS {
     name: String,
     menu: *mut objc::runtime::Object,
@@ -26,35 +67,22 @@ pub struct TrayItemMacOS {
 
 impl TrayItemMacOS {
     pub fn new(title: &str, icon: IconSource) -> Result<Self, TIError> {
-        unsafe {
+        let t = unsafe {
             let pool = NSAutoreleasePool::new(nil);
 
-            let icon = icon.as_str();
-            let icon = Some(icon).filter(|icon| !icon.is_empty());
-            let icon = icon.map(|icon_name| {
-                let icon_name = NSString::alloc(nil).init_str(icon_name);
-                NSImage::imageNamed_(NSImage::alloc(nil), icon_name)
-            });
-
-            let t = TrayItemMacOS {
+            TrayItemMacOS {
                 name: title.to_string(),
                 _pool: pool,
-                icon,
+                icon: get_icon_image(icon),
                 menu: NSMenu::new(nil).autorelease(),
                 main_thread: None,
-            };
-
-            // t.display();
-
-            Ok(t)
-        }
+            }
+        };
+        Ok(t)
     }
 
     pub fn set_icon(&mut self, icon: IconSource) -> Result<(), TIError> {
-        unsafe {
-            let icon_name = NSString::alloc(nil).init_str(icon.as_str());
-            self.icon = Some(NSImage::imageNamed_(NSImage::alloc(nil), icon_name));
-        }
+        self.icon = get_icon_image(icon);
         Ok(())
     }
 
