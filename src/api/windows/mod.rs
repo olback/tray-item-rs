@@ -254,6 +254,15 @@ impl TrayItemWindows {
         nid.hWnd = self.info.hwnd;
         nid.uID = 1;
         nid.uFlags = NIF_TIP;
+
+        #[cfg(target_arch = "x86")]
+        {
+            let mut tip_data = [0u16; 128];
+            tip_data[..wide_tooltip.len()].copy_from_slice(&wide_tooltip);
+            nid.szTip = tip_data;
+        }
+
+        #[cfg(not(target_arch = "x86"))]
         nid.szTip[..wide_tooltip.len()].copy_from_slice(&wide_tooltip);
 
         unsafe {
