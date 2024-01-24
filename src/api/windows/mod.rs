@@ -18,9 +18,9 @@ use windows_sys::Win32::{
     UI::{
         Shell::{Shell_NotifyIconW, NIF_ICON, NIF_TIP, NIM_DELETE, NIM_MODIFY, NOTIFYICONDATAW},
         WindowsAndMessaging::{
-            InsertMenuItemW, SetMenuItemInfoW, LoadImageW, PostMessageW, HICON, IMAGE_ICON, LR_DEFAULTCOLOR,
-            MENUITEMINFOW, MFS_DISABLED, MFS_UNHILITE, MFT_SEPARATOR, MFT_STRING, MIIM_FTYPE,
-            MIIM_ID, MIIM_STATE, MIIM_STRING, WM_DESTROY,
+            InsertMenuItemW, LoadImageW, PostMessageW, SetMenuItemInfoW, HICON, IMAGE_ICON,
+            LR_DEFAULTCOLOR, MENUITEMINFOW, MFS_DISABLED, MFS_UNHILITE, MFT_SEPARATOR, MFT_STRING,
+            MIIM_FTYPE, MIIM_ID, MIIM_STATE, MIIM_STRING, WM_DESTROY,
         },
     },
 };
@@ -111,7 +111,10 @@ impl TrayItemWindows {
     }
 
     pub fn set_icon(&self, icon: IconSource) -> Result<(), TIError> {
-        self.set_icon_from_resource(icon.as_str())
+        match icon {
+            IconSource::Resource(icon_str) => return self.set_icon_from_resource(icon_str),
+            IconSource::RawIcon(raw_icon) => self._set_icon(raw_icon),
+        }
     }
 
     pub fn add_label(&mut self, label: &str) -> Result<(), TIError> {
