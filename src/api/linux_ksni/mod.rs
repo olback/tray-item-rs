@@ -1,10 +1,11 @@
 use crate::{IconSource, TIError};
 use ksni::{menu::StandardItem, Handle, Icon};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 enum TrayItem {
     Label(String),
     MenuItem {
+        id: u32,
         label: String,
         action: Arc<dyn Fn() + Send + Sync + 'static>,
     },
@@ -15,6 +16,7 @@ struct Tray {
     title: String,
     icon: IconSource,
     actions: Vec<TrayItem>,
+    next_id: u32,
 }
 
 pub struct TrayItemLinux {
@@ -64,7 +66,7 @@ impl ksni::Tray for Tray {
                     ..Default::default()
                 }
                 .into(),
-                TrayItem::MenuItem { label, action } => {
+                TrayItem::MenuItem { label, action, .. } => {
                     let action = action.clone();
                     StandardItem {
                         label: label.clone(),
@@ -87,6 +89,7 @@ impl TrayItemLinux {
             title: title.to_string(),
             icon,
             actions: vec![],
+            next_id: 0,
         });
 
         let handle = svc.handle();
@@ -113,16 +116,46 @@ impl TrayItemLinux {
     where
         F: Fn() -> () + Send + Sync + 'static,
     {
-        let action = Arc::new(move || {
-            cb();
-        });
+        self.add_menu_item_with_id(label, cb)?;
+        Ok(())
+    }
+
+    pub fn add_menu_item_with_id<F>(&mut self, label: &str, cb: F) -> Result<u32, TIError>
+    where
+        F: Fn() + Send + Sync + 'static,
+    {
+        let action = Arc::new(cb);
+        let item_id = Arc::new(Mutex::new(0));
+        let item_id_clone = Arc::clone(&item_id);
 
         self.tray.update(move |tray| {
+            let mut id = item_id_clone.lock().unwrap();
+            *id = tray.next_id;
+            tray.next_id += 1;
+
             tray.actions.push(TrayItem::MenuItem {
+                id: *id,
                 label: label.to_string(),
                 action: action.clone(),
             });
         });
+
+        let final_id = *item_id.lock().unwrap();
+        Ok(final_id)
+    }
+
+    pub fn set_menu_item_label(&mut self, label: &str, id: u32) -> Result<(), TIError> {
+        self.tray.update(move |tray| {
+            if let Some(item) = tray.actions.iter_mut().find_map(|item| match item {
+                TrayItem::MenuItem {
+                    id: item_id, label, ..
+                } if *item_id == id => Some(label),
+                _ => None,
+            }) {
+                *item = label.to_string();
+            }
+        });
+
         Ok(())
     }
 
