@@ -130,9 +130,8 @@ pub(crate) unsafe fn init_window() -> Result<WindowInfo, TIError> {
     let mut wnd = unsafe { mem::zeroed::<WNDCLASSW>() };
     wnd.lpfnWndProc = Some(window_proc);
     wnd.lpszClassName = class_name.as_ptr();
-    if RegisterClassW(&wnd) == 0 {
-        return Err(get_win_os_error("Error creating window class"));
-    }
+    
+    RegisterClassW(&wnd);
 
     let hwnd = CreateWindowExW(
         0,
