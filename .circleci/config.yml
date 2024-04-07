@@ -34,7 +34,7 @@ jobs:
 
       - run:
           name: Run Check on examples/linux-edit-menu-items
-          command: cd examples/linux-edit-menu-items && cargo check --verbose --features ksni
+          command: cd examples/linux-edit-menu-items && cargo check --verbose
 
       - run:
           name: Run Check on examples/linux-embeded-icon
