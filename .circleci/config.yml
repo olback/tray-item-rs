@@ -33,6 +33,10 @@ jobs:
           command: cargo check --verbose --features libappindicator
 
       - run:
+          name: Run Check on examples/linux-edit-menu-items
+          command: cd examples/linux-edit-menu-items && cargo check --verbose
+
+      - run:
           name: Run Check on examples/linux-embeded-icon
           command: cd examples/linux-embeded-icon && cargo check --verbose
 
