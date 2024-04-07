@@ -1,6 +1,6 @@
 [package]
 name = "tray-item"
-version = "0.9.0"
+version = "0.10.0"
 authors = ["Edwin Svensson <trayitemrs@olback.net>"]
 edition = "2021"
 description = "Super simple API to make tray icons/menus on Windows, Mac & Linux"
