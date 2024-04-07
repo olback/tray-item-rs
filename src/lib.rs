@@ -7,7 +7,7 @@ pub struct TrayItem(api::TrayItemImpl);
 #[derive(Clone)]
 pub enum IconSource {
     Resource(&'static str),
-    #[cfg(all(target_os = "linux", feature = "ksni"))]
+    #[cfg(any(target_os = "macos", all(target_os = "linux", feature = "ksni")))]
     Data {
         height: i32,
         width: i32,
